@@ -3,6 +3,9 @@ function [Tvals] = Tproj2(m,U)
 %   TVALS = TPROJ2(N,U) returns the 'diagonal' values corresponding to the
 %   projection of the matrix UU' on the set of 2-level Toeplitz matrices.
 %
+%   TVALS is matrix-shaped. Colexicopgraphical ordering is assumed, and the
+%   level-0 moment is the first entry in TVALS (fft-style).
+%
 %   Internal use only
 
 r = size(U,2);
