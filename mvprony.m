@@ -1,21 +1,29 @@
 function [supp,amp,info] = mvprony(mm,n,d,options)
 %MVPRONY Multivariate Prony extraction
-%   Detailed explanation goes here
+%   [S,A] = MVPRONY(MM,N,D,options) extracts the support S and amplitudes A
+%   of a discrete measure explaining the moment matrix MM. N specifies the
+%   maximal order contained in MM and D the dimension.
+%
+%   Options:
+%       'factorized' - whether MM is factorized [ (0) | 1 ]
+%       'shift_mode' - expression for multiplication matrices [ harmouch |
+%           klep | (kunis) ]
+%       'jdiag_step' - procedure for joint diagonalization [ (cardoso) |
+%           random ]
+%       'ordering' - monomials ordering [ lex | (colex) | glex | gcolex ]
+%       'tol' - tolerance for svd (1e-3)
 
 M = size(mm,1);
 
 % set options
 factorized = getoptions(options,'factorized',0);
-shift_mode = getoptions(options,'formula','kunis');
+shift_mode = getoptions(options,'shift_mode','kunis');
 jdiag_step = getoptions(options,'jdiag','cardoso');
 ordering   = getoptions(options,'ordering','colex');
 tol        = getoptions(options,'tol',1e-3);
 
 % only 'positive' moments?
 positive = (M==prod(n+1));
-
-% helper
-mycellfun = @(fun,cell) cellfun(fun,cell,'UniformOutput',false);
 
 % generate ordering
 o  = genorder(n,ordering,positive);
@@ -34,7 +42,8 @@ for i=1:d
     Shift{i} = sparse(i1,ishift,ones(length(i1),1),M,M);
 end
 
-% compute multiplication matrices
+% *** compute multiplication matrices ***
+% ***************************************
 N = cell(1,d);
 switch shift_mode
     case 'kunis'
@@ -96,7 +105,8 @@ if d==2
     fprintf('Relative commutation error: %.3f\n', e);
 end
 
-% joint diagonalization
+% *** joint diagonalization ***
+% *****************************
 if strcmp(jdiag_step,'random')
     lambda = getoptions(options,'lambda',rand(1,d));
     lambda = reshape(lambda,[1 1 d]);
@@ -105,12 +115,13 @@ if strcmp(jdiag_step,'random')
     [H,h] = eig(Nco); h = diag(h);
 else
     As = cell2mat(N);
-    As = reshape(As,[size(Nco),d]);
+    As = reshape(As,[size(N{1}),d]);
     [H,~] = jeigen_pcg(As,'init','eye');
     H = inv(H);
 end
 
-% compute support (from eigenvalues of multiplication matrices)
+% *** compute support (from eigenvalues of multiplication matrices) ***
+% *********************************************************************
 supp    = zeros(s,d);
 modulus = zeros(s,d);
 for i=1:d
@@ -122,17 +133,18 @@ for i=1:d
 end
 modulus = mean(modulus,2);
 
-% compute amplitudes (Vandermonde system)
-% d-dimensional meshgrid
-G = cell(1,d);
-[G{:}] = ndgrid();
-G = mycellfun(@(M)M(:),G);
-G = cell2mat(G);
-
+% *** compute amplitudes (Vandermonde system) ***
+% ***********************************************
+% matching index range to moment range: [0 n]->[-n n], [-n n]->[-2n 2n]
+if positive
+    ofull = genorder(n,ordering,0);
+else
+    ofull = genorder(2*n,ordering,1);
+end
 % estimated matrix
-Gr    = reshape(G,[M,1,d]);
+Gr    = reshape(ofull,[size(ofull,1),1,d]); % frequencies sorted following ordering
 Sr    = reshape(supp,[1,s,d]);
-Fsupp = exp(-2i*pi* (sum(Gr.*Sr,3)) );
+Fsupp = exp(-2i*pi* (sum(Gr.*Sr,3)) ); % broadcasting
 
 [~,ids] = marginals(n,ordering,positive); % all moments (no repetition)
 if factorized
@@ -146,10 +158,9 @@ end
 % amplitudes: solve least-square system
 amp = real(Fsupp \ c(:));
 
-
+% *** additional infos ***
+% ************************
 info.modulus = modulus;
-
-
 end
 
 function [U,S,V] = mysvd(M,tol)
