@@ -15,9 +15,9 @@ fb = @(Z) f(reshc(Z));
 gb = @(Z) flatc( g(reshc(Z)) );
 fg = @(Z) deal2(fb(Z),gb(Z));
 
-checkgradient(fb,gb,flatc(U));
-drawnow;
-pause(1);
+%checkgradient(fb,gb,flatc(U));
+%drawnow;
+%pause(1);
 
 [U,val,exitflag,output] = lbfgs(fg,flatc(U),options);
 U = reshc(U);
