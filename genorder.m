@@ -13,18 +13,44 @@ switch d
     case 1
         S = (-n:n)';
     case 2
-        [Y,X] = meshgrid(-n(1):n(1),-n(2):n(2));
+        [k1,k2] = ndgrid(-n(1):n(1),-n(2):n(2));
         switch ordering
             case 'colex'
-                S = [X(:),Y(:)];
+                S = [k1(:),k2(:)];
             case 'lex'
-                S = [Y(:),X(:)];
+                k1 = k1'; k2 = k2';
+                S = [k1(:),k2(:)];
             case 'gcolex'
-                S = [X(:),Y(:)];
+                S = [k1(:),k2(:)];
                 [~,i] = sort(sum(abs(S),2));
                 S = S(i,:);
             case 'glex'
-                S = [Y(:),X(:)];
+                k1 = k1'; k2 = k2';
+                S = [k1(:),k2(:)];
+                [~,i] = sort(sum(abs(S),2));
+                S = S(i,:);
+        end
+    case 4
+        [k1,k2,k3,k4] = ndgrid(-n(1):n(1),-n(2):n(2),-n(3):n(3),-n(4):n(4));
+        switch ordering
+            case 'colex'
+                S = [k1(:),k2(:),k3(:),k4(:)];
+            case 'lex'
+                k1 = permute(k1,[2 3 4 1]);
+                k2 = permute(k2,[4 3 2 1]);
+                k3 = permute(k3,[4 3 2 1]); % ou [1 2]?
+                k4 = permute(k4,[4 3 2 1]);
+                S = [k1(:),k2(:),k3(:),k4(:)];
+            case 'gcolex'
+                S = [k1(:),k2(:),k3(:),k4(:)];
+                [~,i] = sort(sum(abs(S),2));
+                S = S(i,:);
+            case 'glex'
+                k1 = permute(k1,[2 3 4 1]);
+                k2 = permute(k2,[4 3 2 1]);
+                k3 = permute(k3,[4 3 2 1]); % ou [1 2]?
+                k4 = permute(k4,[4 3 2 1]);
+                S = [k1(:),k2(:),k3(:),k4(:)];
                 [~,i] = sort(sum(abs(S),2));
                 S = S(i,:);
         end

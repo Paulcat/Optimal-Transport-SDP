@@ -23,7 +23,7 @@ end
 pows = reshape(o,[M,1,d]) - reshape(o,[1,M,d]);
 
 % all moments indices in moment matrix (without repetition)
-powlist = reshape(pows,M^2,2); % list of powers
+powlist = reshape(pows,M^2,d); % list of powers
 [~,I] = unique(powlist,'rows','stable');
 all_moms = powlist(I,:); % all powers, without repetition
 [Y,X] = meshgrid(1:M);
