@@ -41,6 +41,7 @@ while crit < 0 && niter < maxit
     
     % *** Linear Minimization Oracle ***
     T = Tproj2(m,U);
+    %T = Tproj4(m,U);
     glmo = @(h) Om .* gt(T,U,Om.*h);
     %
     tic;
@@ -55,6 +56,7 @@ while crit < 0 && niter < maxit
     
     % *** Frank-Wolfe update (with linesearch) ***
     t  = Tproj2(m,eVecm);
+    %t  = Tproj4(m,eVecm);
     co = lco(U,T,eVecm,t);
     [mu,nu] = ffw_ls(co);
     if mu==0

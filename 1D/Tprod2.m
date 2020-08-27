@@ -3,7 +3,7 @@ function [Tx] = Tprod2(m,Tvals,x)
 %   TPROD2(N,TVALS,X) returns the product between the 2-level Toeplitz
 %   matrix whose 'diagonal' values are given by TVALS, and the array X.
 %
-%   N = (N1,N2) specifies the dimensions of the 2-level Toeplitz matrix
+%   N = (N1,N2) is the dimensions of the 2-level Toeplitz matrix
 %
 %   TVALS is a matrix of size (2*N1-1,2*N2-1)
 %   TODO: explain order

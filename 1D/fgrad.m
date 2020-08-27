@@ -1,5 +1,5 @@
 function [G,GU] = fgrad(m,cost,u1,u2,la,rho)
-%FGRAD OT gradient for FFW
+%FGRAD OT gradient for FFW (1D)
 %   G = FGRAD(M,C,U1,U2,LA,RHO) returns the gradient
 %
 %   [G,P] = FGRAD(...) also returns the gradient with precomputations, for
@@ -27,8 +27,9 @@ G  = @(U,h)   f0*( Tprod2(m,N.*cost,h) + GT(Tproj2(m,U),h) + 1/rho*U*(U'*h) );
 GU = @(T,U,h) f0*( Tprod2(m,N.*cost,h) + GT(T,h) + 1/rho*U*(U'*h) );
 
 if debug
+    disp('debug mode!!');
     GT = @(T,h) 2*Tprod2(m,N.*(T.*I-Y),h);
-    G  = @(U,h) GT(Tproj2(m,U),h);
+    G  = @(U,h) Tprod2(m,Tproj2(m,U),h);
 end
 
 end

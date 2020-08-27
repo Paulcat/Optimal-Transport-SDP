@@ -1,5 +1,5 @@
 function F = fobj(m,cost,u1,u2,la,rho)
-%FOBJ OT objective for FFW
+%FOBJ OT objective for FFW (1D)
 %   Detailed explanation goes here
 
 debug = 0;
@@ -20,8 +20,9 @@ FT = @(T) real(trace(cost'*T)) + ...
 F = @(U) f0 * ( FT(Tproj2(m,U)) + 1/2/rho * norm(U'*U,'fro')^2 );
 
 if debug
+    disp('debug mode!!');
     FT = @(T) norm(T(:,1)-u1,'fro')^2 + norm(T(1,:)-u2.','fro')^2;
-    F = @(U) FT(Tproj2(m,U));
+    F = @(U) 1/2*normT2(Tproj2(m,U));
 end
 
 end
