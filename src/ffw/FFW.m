@@ -1,4 +1,4 @@
-function [U] = FFW(problem,options)
+function [U,info] = FFW(problem,options)
 %UNTITLED4 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -7,11 +7,13 @@ function [U] = FFW(problem,options)
 % load problem parameters
 m  = problem.vardim;
 M  = prod(m);
+d  = numel(m);
 %
-f   = problem.fobj;
-g   = problem.grad;
-gt  = problem.grad_pre;
-lco = problem.ls;
+f   	= problem.fobj;
+g   	= problem.grad;
+gt  	= problem.grad_pre;
+lco 	= problem.ls;
+pflag = problem.name;
 %
 options_lmo  = set_lmo_options (options);
 options_bfgs = set_bfgs_options(options);
@@ -37,11 +39,18 @@ fprintf('IT  OBJ \t GAP \t    PI   (TIME)  LS \t  BFGS (TIME)\n');
 fprintf('-------------------------------------------------------------\n');
 fprintf('%-3i %-+4.4e\n',niter,f(U0))
 
+E = [];
 while crit < 0 && niter < maxit
+    E = [E; f(U)];
     
     % *** Linear Minimization Oracle ***
-    T = Tproj2(m,U);
-    %T = Tproj4(m,U);
+    if d==1
+        T = Tproj(m,U);
+    elseif d==2
+        T = Tproj2(m,U);
+    elseif d==4
+        T = Tproj4(m,U);
+    end
     glmo = @(h) Om .* gt(T,U,Om.*h);
     %
     tic;
@@ -55,10 +64,15 @@ while crit < 0 && niter < maxit
     
     
     % *** Frank-Wolfe update (with linesearch) ***
-    t  = Tproj2(m,eVecm);
-    %t  = Tproj4(m,eVecm);
+    if d==1
+        t = Tproj(m,eVecm);
+    elseif d==2
+        t = Tproj2(m,eVecm);
+    elseif d==4
+        t = Tproj4(m,eVecm);
+    end
     co = lco(U,T,eVecm,t);
-    [mu,nu] = ffw_ls(co);
+    [mu,nu,stop] = ffw_ls(co,pflag);
     if mu==0
         U = sqrt(nu)*eVecm;
     elseif nu==0
@@ -70,9 +84,17 @@ while crit < 0 && niter < maxit
     
     % *** BFGS step ***
     if options_bfgs.on
-        tic;
-        [U,nBFGS] = ffw_bfgs(U,f,@(U)2*g(U,U),options_bfgs);
-        time_bfgs = toc;
+		 if pflag
+			 tau = getoptions(options_bfgs,'reg',inf);
+			 fbfgs = @(U) f(U) + 1/2/tau*(norm(U,'fro')^2-M)^2; %regularization for trace constraint
+			 gbfgs = @(U) 2*g(U,U) + 2/tau*(norm(U,'fro')^2-M)*U;
+		 else
+			 fbfgs = @(U) f(U);
+			 gbfgs = @(U) 2*g(U,U);
+		 end
+		 tic;
+		 [U,nBFGS] = ffw_bfgs(U,fbfgs,gbfgs,options_bfgs);
+		 time_bfgs = toc;
     end
     
     % update monitors
@@ -83,6 +105,7 @@ while crit < 0 && niter < maxit
         niter,f(U),crit,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
 end
 
+info.E = E;
 
 end
 
@@ -98,6 +121,8 @@ opt_bfgs.DerivativeCheck = 'off';
 opt_bfgs.Corr            = 15;
 opt_bfgs.Damped          = 0;
 opt_bfgs.numDiff         = 0; % use-provided gradient
+%
+opt_bfgs.reg             = getoptions(options, 'bfgsReg', Inf);
 end
 
 function opt_lmo = set_lmo_options(options)

@@ -1,4 +1,4 @@
-function [G,GU] = fgrad(m,cost,u1,u2,la,rho)
+function [G,GU] = ot1_fgrad(m,cost,u1,u2,la,rho)
 %FGRAD OT gradient for FFW (1D)
 %   G = FGRAD(M,C,U1,U2,LA,RHO) returns the gradient
 %
@@ -9,6 +9,7 @@ debug = 0;
 
 % scaling
 f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
+% f0 = 1;
 
 % helpers
 N = 1./Dnumel2(m);
