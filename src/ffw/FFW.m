@@ -14,6 +14,7 @@ g   	= problem.grad;
 gt  	= problem.grad_pre;
 lco 	= problem.ls;
 pflag = problem.name;
+scale = min(problem.hparams); % min la,rho to "normalize" criterion...
 %
 options_lmo  = set_lmo_options (options);
 options_bfgs = set_bfgs_options(options);
@@ -40,7 +41,7 @@ fprintf('-------------------------------------------------------------\n');
 fprintf('%-3i %-+4.4e\n',niter,f(U0))
 
 E = [];
-while crit < 0 && niter < maxit
+while crit < -tol && niter < maxit
     E = [E; f(U)];
     
     % *** Linear Minimization Oracle ***
@@ -60,7 +61,7 @@ while crit < 0 && niter < maxit
     
     % stopping criterion
     ege  = eVecm'*g(U,eVecm);
-    crit = ege;
+    crit = ege/scale;
     
     
     % *** Frank-Wolfe update (with linesearch) ***

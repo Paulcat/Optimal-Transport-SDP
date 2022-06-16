@@ -1,4 +1,4 @@
-function [G,GU] = ot1_fgrad(m,cost,u1,u2,la,rho)
+function [G,GU] = ot1_fgrad(m,cost,u1,u2,f0,la,rho)
 %FGRAD OT gradient for FFW (1D)
 %   G = FGRAD(M,C,U1,U2,LA,RHO) returns the gradient
 %
@@ -8,7 +8,7 @@ function [G,GU] = ot1_fgrad(m,cost,u1,u2,la,rho)
 debug = 0;
 
 % scaling
-f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
+%f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
 % f0 = 1;
 
 % helpers
@@ -24,8 +24,8 @@ Y = u1.*I1 + u2.'.*I2;
 GT = @(T,h) 1/2/la * Tprod2(m,N.*(T.*I-Y),h) - 1/rho * Tprod2(m,T,h);
 
 % gradient
-G  = @(U,h)   f0*( Tprod2(m,N.*cost,h) + GT(Tproj2(m,U),h) + 1/rho*U*(U'*h) );
-GU = @(T,U,h) f0*( Tprod2(m,N.*cost,h) + GT(T,h) + 1/rho*U*(U'*h) );
+G  = @(U,h)   1/f0*( Tprod2(m,N.*cost,h) + GT(Tproj2(m,U),h) + 1/rho*U*(U'*h) );
+GU = @(T,U,h) 1/f0*( Tprod2(m,N.*cost,h) + GT(T,h) + 1/rho*U*(U'*h) );
 
 if debug
     disp('debug mode!!');
