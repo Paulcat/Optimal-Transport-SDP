@@ -1,10 +1,10 @@
-function coeffs = inv1_lscoeffs(m,L,la,rho)
+function coeffs = inv1_lscoeffs(m,L,f0,la,rho)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
 
 % L = ifftshit(L);
 A = L'*L;
-f0 = 1;
+%f0 = 1;
 
 % helpers
 fro2 = @(x) norm(x,'fro')^2;
@@ -26,6 +26,6 @@ xy = @(U,TU,V,TV) 1/la * real((A*TU(:))'*TV(:)) + real(TU(:)'*TV(:)) + ...
 
 %c = @(V,TV) 1/2/la*fro2(L*TV) + 1/2*fro2(TV) + 1/2/rho*(dotM(V,V)-normT2(TV));
 
-coeffs = @(U,TU,V,TV) num2cell(f0 * [xx(U,TU), xx(V,TV), xy(U,TU,V,TV), 0, 0]);
+coeffs = @(U,TU,V,TV) num2cell(1/f0 * [xx(U,TU), xx(V,TV), xy(U,TU,V,TV), 0, 0, 0]);
 
 end

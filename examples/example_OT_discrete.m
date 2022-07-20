@@ -40,10 +40,11 @@ eval2 = @(p) real( exp(-2i*pi*(-n2:n2)'*t2')' * p(:) );
 
 % hyper parameters and scaling constants for ffw
 Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
-Cr = prod(nn)^2; %??
+%Cr = prod(nn)^2; %??
+Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
-la  = 1e-3*Cl; % "unbalanced" penalization 
-rho = 1e-2*Cr; % toeplitz penalization
+la  = 1e-8*Cl; % "unbalanced" penalization 
+rho = 1e-3*Cr; % toeplitz penalization
 
 
 
@@ -69,7 +70,7 @@ problem.gscaling	= 1/f0; % scaling constant st f(0)=1
 problem.grad 		= g; % gradient
 problem.grad_pre  = gU; % gradient with partial precomputations
 problem.hparams	= [la,rho];
-problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,la,rho); % coefficients for line-search
+problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la,rho); % coefficients for line-search
 % ******************
 % ******************
 
@@ -81,8 +82,8 @@ problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,la,rho); % coefficients for line-sear
 options = struct;
 %
 %
-options.tol 			= 1e-9; % tolerance on ffw criterion
-options.maxiter		= 30; % max iterations for ffw
+options.tol 			= 1e-5; % tolerance on ffw criterion
+options.maxiter		= 6; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500; 
 options.lmoTol 		= 1e-10;

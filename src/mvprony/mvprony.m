@@ -1,4 +1,4 @@
-function [supp,amp,info] = mvprony(mm,n,d,options)
+function [supp,amp,info] = mvprony(mm,n,options)
 %MVPRONY Multivariate Prony extraction
 %   [S,A] = MVPRONY(MM,N,D,options) extracts the support S and amplitudes A
 %   of a discrete measure explaining the moment matrix MM. N specifies the
@@ -14,6 +14,7 @@ function [supp,amp,info] = mvprony(mm,n,d,options)
 %       'tol' - tolerance for svd (1e-3)
 
 M = size(mm,1);
+d = numel(n);
 
 % set options
 factorized = getoptions(options,'factorized',0);
@@ -116,7 +117,7 @@ if strcmp(jdiag_step,'random')
 else
     As = cell2mat(N);
     As = reshape(As,[size(N{1}),d]);
-    [H,~] = jeigen_pcg(As,'init','eye');
+    [H,~] = jeigen_pcg(As,'init','eye','verbose',0);
     H = inv(H);
 end
 

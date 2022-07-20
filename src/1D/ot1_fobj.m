@@ -5,9 +5,9 @@ function [Fn,normalization] = ot1_fobj(m,cost,u1,u2,la,rho)
 debug = 0;
 
 % scaling
-f0 = 1/4/la * (norm(u1,'fro')^2 + norm(u2,'fro')^2);
+%f0 = 1/4/la * (norm(u1,'fro')^2 + norm(u2,'fro')^2);
 %f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
-% f0 = 1;
+f0 = 1;
 
 % helper
 d = length(m);

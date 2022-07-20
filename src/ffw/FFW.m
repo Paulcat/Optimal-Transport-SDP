@@ -10,20 +10,24 @@ M  = prod(m);
 d  = numel(m);
 %
 f   	= problem.fobj;
+%fn 	= problem.gscaling;
 g   	= problem.grad;
 gt  	= problem.grad_pre;
 lco 	= problem.ls;
-pflag = problem.name;
-scale = min(problem.hparams); % min la,rho to "normalize" criterion...
+type	= problem.name;
+%scale = min(problem.hparams); % min la,rho to "normalize" criterion...
 %
 options_lmo  = set_lmo_options (options);
 options_bfgs = set_bfgs_options(options);
 
+pflag = strcmp(type,'Invariant');
+
 % set options
-U0    = getoptions(options,'init',zeros(M,1));
-Om    = getoptions(options,'Om',ones(M,1));
-maxit = getoptions(options,'maxiter',20);
-tol   = getoptions(options,'tol',1e-5);
+U0    	= getoptions(options,'init',zeros(M,1)); %TODO: add error when initialization do not satisfy constraint...
+Om    	= getoptions(options,'Om',ones(M,1));
+maxit 	= getoptions(options,'maxiter',20);
+tol   	= getoptions(options,'tol',1e-5);
+verbose 	= getoptions(options,'display','on'); 
 
 % *** Initialization ***
 niter = 0;
@@ -33,14 +37,16 @@ v0    = ones(M,1)/sqrt(M);
 
 
 % DISPLAY
-fprintf('\n\n')
-fprintf('--------------------- FFW Algorithm -------------------------\n')
-fprintf('-------------------------------------------------------------\n');
-fprintf('IT  OBJ \t GAP \t    PI   (TIME)  LS \t  BFGS (TIME)\n');
-fprintf('-------------------------------------------------------------\n');
-fprintf('%-3i %-+4.4e\n',niter,f(U0))
+if strcmp(verbose,'on')
+	fprintf('\n\n')
+	fprintf('--------------------- FFW Algorithm -------------------------\n')
+	fprintf('-------------------------------------------------------------\n');
+	fprintf('IT  OBJ \t GAP \t    PI   (TIME)  LS \t  BFGS (TIME)\n');
+	fprintf('-------------------------------------------------------------\n');
+	fprintf('%-3i %-+4.4e\n',niter,f(U0))
+end
 
-E = [];
+E = []; % objective values
 while crit < -tol && niter < maxit
     E = [E; f(U)];
     
@@ -61,7 +67,7 @@ while crit < -tol && niter < maxit
     
     % stopping criterion
     ege  = eVecm'*g(U,eVecm);
-    crit = ege/scale;
+    crit = ege;%/scale, /fn?
     
     
     % *** Frank-Wolfe update (with linesearch) ***
@@ -90,7 +96,7 @@ while crit < -tol && niter < maxit
 			 fbfgs = @(U) f(U) + 1/2/tau*(norm(U,'fro')^2-M)^2; %regularization for trace constraint
 			 gbfgs = @(U) 2*g(U,U) + 2/tau*(norm(U,'fro')^2-M)*U;
 		 else
-			 fbfgs = @(U) f(U);
+			 fbfgs = f;
 			 gbfgs = @(U) 2*g(U,U);
 		 end
 		 tic;
@@ -102,11 +108,14 @@ while crit < -tol && niter < maxit
     niter = niter+1;
     
     % display
-    fprintf('%-3i %-+4.4e  %-+4.2e  %-4i (%4.1f)  %-.1e  %-4i (%4.1f)\n', ...
+	 if strcmp(verbose,'on')
+    	fprintf('%-3i %-+4.4e  %-+4.2e  %-4i (%4.1f)  %-.1e  %-4i (%4.1f)\n', ...
         niter,f(U),crit,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
+	 end
 end
 
-info.E = E;
+info.E 	 = E;
+info.crit = crit; % final value of criterion
 
 end
 

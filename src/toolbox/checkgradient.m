@@ -21,10 +21,12 @@ clf;
 subplot(1,2,1), hold on;
 plot(1:ndir, real(df),   '.');
 plot(1:ndir, real(df_u), 'o');
+title('Real part');
 %
 subplot(1,2,2), hold on;
 plot(1:ndir, imag(df),   '.');
 plot(1:ndir, imag(df_u), 'o');
+title('Imaginary part');
 
 %df_u
 %df ./ df_u
