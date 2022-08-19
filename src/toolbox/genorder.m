@@ -10,9 +10,9 @@ function S = genorder(n,ordering,positive)
 d = numel(n);
 
 switch d
-    case 1
-        S = (-n:n)';
-    case 2
+	case 1
+		S = (-n:n)';
+	case 2
         [k1,k2] = ndgrid(-n(1):n(1),-n(2):n(2));
         switch ordering
             case 'colex'
@@ -29,7 +29,13 @@ switch d
                 S = [k1(:),k2(:)];
                 [~,i] = sort(sum(abs(S),2));
                 S = S(i,:);
-        end
+		  end
+	case 3
+		[k1,k2,k3] = ndgrid(-n(1):n(1),-n(2):n(2),-n(3):n(3));
+		switch ordering
+			case 'colex'
+				S = [k1(:),k2(:),k3(:)];
+		end
     case 4
         [k1,k2,k3,k4] = ndgrid(-n(1):n(1),-n(2):n(2),-n(3):n(3),-n(4):n(4));
         switch ordering

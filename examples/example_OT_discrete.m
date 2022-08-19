@@ -13,7 +13,7 @@ x2 = rand(s2,1);
 a2 = ones(s2,1)/s2;
 
 
-% moments of marginals
+%% moments of marginals
 [n1,n2]  = deal(10,10);
 nn = [n1 n2];
 % 1st marginal
@@ -43,8 +43,8 @@ Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
 %Cr = prod(nn)^2; %??
 Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
-la  = 1e-8*Cl; % "unbalanced" penalization 
-rho = 1e-3*Cr; % toeplitz penalization
+la  = 1e-5*Cl; % "unbalanced" penalization 
+rho = 1e-6*Cr; % toeplitz penalization
 
 
 
@@ -83,7 +83,7 @@ options = struct;
 %
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 6; % max iterations for ffw
+options.maxiter		= 10; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500; 
 options.lmoTol 		= 1e-10;
@@ -113,7 +113,8 @@ cvx_end
 
 % recovery
 [I,J] = find(P0 > 1e-7);
-
+x0 = [x1(I),x2(J)];
+a0 = P0(sub2ind([s1,s2],I,J));
 
 
 
@@ -127,7 +128,7 @@ U = FFW(problem,options);
 
 % prony extraction
 options_prony.factorized = 1;
-[x,a] = mvprony(U,nn,2,options_prony);
+[x,a] = mvprony(U,nn,options_prony);
 
 % display
 clf, hold on;
@@ -140,3 +141,36 @@ scatter(zeros(s2,1),x2,100,'.');
 xlim([0,1]), ylim([0,1]);
 % ********************
 % ********************
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+%% *** Some short tests ***
+% ************************
+[fY,fX] = meshgrid(0:n2,0:n1);
+F = @(x) exp(-2i*pi * (fX(:)*x(:,1)' + fY(:)*x(:,2)'));
+
+% moment matrix of ground truth coupling
+U0 = F(x0).*sqrt(a0');
+M0 = U0*U0';
+
+% moment matrix of recovered coupling
+Ur = F(x).*sqrt(a');
+Mr = Ur*Ur';
+
+% ffw output moment matrix
+M	= U*U';
+
+fprintf('reconstruction errors: %d', norm(M0-M,'fro')/norm(M0,'fro'));

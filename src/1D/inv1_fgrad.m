@@ -1,5 +1,5 @@
 function [G,GU] = inv1_fgrad(m,L,f0,la,rho)
-% INV1_FGRAD
+%INV1_FGRAD
 
 % A = ifftshift(L'*L);
 A = L'*L;

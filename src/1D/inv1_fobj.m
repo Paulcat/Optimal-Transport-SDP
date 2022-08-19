@@ -2,10 +2,13 @@ function [Fn,normalization] = inv1_fobj(m,L,la,rho)
 % INV1_FOBJ objective for invariant measure problem
 
 d = length(m);
+if d ~= 1
+	error('dimension should be 1');
+end
 % L = ifftshift(L);
 
 normT2 = @(T) sum(Dnumel(m) .* abs(T).^2,1:d);
-normT  = @(T) sqrt(normT2(T));
+%normT  = @(T) sqrt(normT2(T));
 
 FT = @(T) 1/2/la * norm(L*T,'fro')^2 + 1/2 * norm(T,'fro')^2 - 1/2/rho * normT2(T);
 F  = @(U) FT(Tproj(m,U)) + 1/2/rho * norm(U'*U,'fro')^2;

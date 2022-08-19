@@ -4,14 +4,15 @@
 % ***** set up problem ******
 % ***************************
 % create marginals
-s = 200;
+s = 6;
+offset = 0.01;
 % 1st
 x1 = linspace(0,1,s)';
-a1 = exp(-(x1-.3).^2/2/.01^2);
+a1 = offset + exp(-(x1-.3).^2/2/.01^2);
 a1 = a1/norm(a1,1);
 % 2nd
 x2 = linspace(0,1,s)';
-a2 = .3*exp(-(x2-.7).^2/2/.005^2) + .6*exp(-(x2-.5).^2/2/.02^2);
+a2 = offset + .3*exp(-(x2-.7).^2/2/.005^2) + .6*exp(-(x2-.5).^2/2/.02^2);
 a2 = a2/norm(a2,1);
 
 % display
@@ -21,7 +22,7 @@ area(x2,a2);
 
 
 % moments of marginals
-[n1,n2] = deal(15,15);
+[n1,n2] = deal(20,20);
 nn 	  = [n1,n2];
 % 1st marginal
 c1 = exp(-2i*pi*(-n1:n1)'*x1(:)') * a1(:);
@@ -80,7 +81,7 @@ problem.gscaling 	= 1/f0;
 problem.grad 		= g;
 problem.grad_pre 	= gU;
 problem.hparams 	= [la,rho];
-problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,la,rho);
+problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la,rho);
 % ***************
 % ***************
 
@@ -89,7 +90,7 @@ problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,la,rho);
 options = struct;
 %
 options.tol 			= 1e-5;
-options.maxiter 		= 30;
+options.maxiter 		= 35;
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
 options.lmoTol 		= 1e-10;
@@ -125,9 +126,9 @@ cvx_end
 % ***********************
 U = FFW(problem,options);
 
-% prony extraction
+%% prony extraction
 options_prony.factorized = 1;
-[x,a] = mvprony(U,nn,2,options_prony);
+[x,a] = mvprony(U,nn,options_prony);
 
 % display
 clf, hold on;

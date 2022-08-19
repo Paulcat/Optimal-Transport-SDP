@@ -114,6 +114,14 @@ while crit < -tol && niter < maxit
 	 end
 end
 
+if strcmp(verbose,'on')
+	if crit >= -tol
+		fprintf('iterations stopped: tolerance reachedi\n');
+	else
+		fprintf('maximum iterations reached\n');
+	end
+end
+
 info.E 	 = E;
 info.crit = crit; % final value of criterion
 

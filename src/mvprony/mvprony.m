@@ -117,7 +117,7 @@ if strcmp(jdiag_step,'random')
 else
     As = cell2mat(N);
     As = reshape(As,[size(N{1}),d]);
-    [H,~] = jeigen_pcg(As,'init','eye','verbose',0);
+    [H,~] = jeigen_pcg(As,'init','eye','verbose',1);
     H = inv(H);
 end
 
@@ -158,6 +158,10 @@ end
 
 % amplitudes: solve least-square system
 amp = real(Fsupp \ c(:));
+
+if positive
+	amp(amp<0) = eps;
+end
 
 % *** additional infos ***
 % ************************
