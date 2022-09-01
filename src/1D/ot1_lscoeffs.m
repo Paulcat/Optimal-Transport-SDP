@@ -10,21 +10,22 @@ debug = 0;
 
 % helpers
 fro2   = @(x) norm(x,'fro')^2;
-normT2 = @(T) sum( Dnumel2(m) .* abs(T).^2, 'all');
-dotT   = @(T1,T2) sum( Dnumel2(m) .* conj(T1) .* T2, 'all');
-dotM   = @(M1,M2) sum( abs(M1'*M2).^2, 'all');
+%normT2 = @(T) sum( Dnumel2(m) .* abs(T).^2, 'all');
+%dotT   = @(T1,T2) sum( Dnumel2(m) .* conj(T1) .* T2, 'all');
+%dotM   = @(M1,M2) sum( abs(M1'*M2).^2, 'all');
 C1     = @(T) T(:,1);
 C2     = @(T) T(1,:).';
 
 %
-xx = @(U,TU) 1/2/la * (fro2(C1(TU)) + fro2(C2(TU))) + ... %before it was 1/4/la...
-    1/rho * (dotM(U,U) - normT2(TU));
+xx = @(U,TU) 1/2/la * (fro2(C1(TU)) + fro2(C2(TU))) ;%+ ... %before it was 1/4/la...
+%	1/rho * (dotM(U,U) - normT2(TU));
 %
-xy = @(U,TU,V,TV) 1/2/la * (real(C1(TU)'*C1(TV) + C2(TU)'*C2(TV))) + ...
-    1/rho * (dotM(U,V) - real(dotT(TU,TV)));
+xy = @(U,TU,V,TV) 1/2/la * (real(C1(TU)'*C1(TV) + C2(TU)'*C2(TV))) ;%+ ...
+%	1/rho * (dotM(U,V) - real(dotT(TU,TV)));
 %
 x = @(T) real( trace(cost'*T) - 1/2/la * (C1(T)'*u1(:) + C2(T)'*u2(:)) ); % before it was 1/2/la...
 %
+
 a = 1/f0;
 
 coeffs = @(U,TU,V,TV) num2cell(1/f0 * [xx(U,TU),xx(V,TV),xy(U,TU,V,TV),x(TU),x(TV),a]);

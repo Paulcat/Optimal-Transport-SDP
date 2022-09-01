@@ -1,6 +1,6 @@
 function [U,info] = FFW(problem,options)
-%UNTITLED4 Summary of this function goes here
-%   Detailed explanation goes here
+%FFW Fourier-based Frank Wolfe algorithm
+%   FFW(PROBLEM,OPTIONS) solves the user-specified SDP problem under Toeplitz constraint
 
 
 
@@ -10,11 +10,12 @@ M  = prod(m);
 d  = numel(m);
 %
 f   	= problem.fobj;
-%fn 	= problem.gscaling;
+f0 	= problem.f0;
 g   	= problem.grad;
-gt  	= problem.grad_pre;
+%gt  	= problem.grad_pre;
 lco 	= problem.ls;
 type	= problem.name;
+la 	= getoptions(problem,'hyper',0);
 %scale = min(problem.hparams); % min la,rho to "normalize" criterion...
 %
 options_lmo  = set_lmo_options (options);
@@ -27,105 +28,119 @@ U0    	= getoptions(options,'init',zeros(M,1)); %TODO: add error when initializa
 Om    	= getoptions(options,'Om',ones(M,1));
 maxit 	= getoptions(options,'maxiter',20);
 tol   	= getoptions(options,'tol',1e-5);
-verbose 	= getoptions(options,'display','on'); 
+verbose 	= getoptions(options,'display','on');
+rho 		= getoptions(options,'rho',1e-3);
+
+
+% Toeplitz penalization helper
+[Tpen,Tpen_g,Tproj,~,Dnumel] = ffw_Tpen(m);
+
 
 % *** Initialization ***
 niter = 0;
 crit  = -Inf;
 U     = U0;
+T 		= Tproj(U);
+fval  = f(T) + 1/rho * Tpen(U,T);
 v0    = ones(M,1)/sqrt(M);
-
+%
 
 % DISPLAY
 if strcmp(verbose,'on')
 	fprintf('\n\n')
-	fprintf('--------------------- FFW Algorithm -------------------------\n')
-	fprintf('-------------------------------------------------------------\n');
-	fprintf('IT  OBJ \t GAP \t    PI   (TIME)  LS \t  BFGS (TIME)\n');
-	fprintf('-------------------------------------------------------------\n');
-	fprintf('%-3i %-+4.4e\n',niter,f(U0))
+	fprintf('-------------------------------- FFW Algorithm --------------------------------\n');
+	fprintf('%-25s %-25s %-25s\n', 'GENERAL OPTIONS', 'LMO OPTIONS', 'BFGS OPTIONS');
+	fprintf('%10s = %-11i  %10s = %-11i  %10s = %-11i\n', ...
+		'maxiter', maxit, 'maxiter', options_lmo.maxiter, 'maxiter', options_bfgs.MaxIter);
+	fprintf('%10s = %-12.1e %10s = %-12.1e %10s = %-12.1e\n', ...	
+		'tol', tol, 'tol', options_lmo.tol, 'tol', options_bfgs.optTol);
+	fprintf('%10s = %-10.4e\n', 'lambda', la);
+	fprintf('%10s = %-10.4e\n', 'rho', rho); 
+	fprintf('-------------------------------------------------------------------------------\n');
+	fprintf('%-3s %-18s %-14s %-5s %-8s %-12s %-5s %-8s', ...
+		'IT','OBJ','GAP','PI','(TIME)','LS:NEW/OLD','BFGS','(TIME)');
+	fprintf('\n');
+	fprintf('-------------------------------------------------------------------------------\n');
+	%fprintf('%-3i %-+4.4e\n',niter,f(T) + 1/rho*Tpen(U,T))
 end
+
+
+
 
 E = []; % objective values
 while crit < -tol && niter < maxit
-    E = [E; f(U)];
-    
-    % *** Linear Minimization Oracle ***
-    if d==1
-        T = Tproj(m,U);
-    elseif d==2
-        T = Tproj2(m,U);
-    elseif d==4
-        T = Tproj4(m,U);
-    end
-    glmo = @(h) Om .* gt(T,U,Om.*h);
-    %
-    tic;
-    [eVecm,nPI] = ffw_lmo(glmo,v0,options_lmo);
-    time_lmo = toc;
-    eVecm = Om .* eVecm;
-    
-    % stopping criterion
-    ege  = eVecm'*g(U,eVecm);
-    crit = ege;%/scale, /fn?
-    
-    
-    % *** Frank-Wolfe update (with linesearch) ***
-    if d==1
-        t = Tproj(m,eVecm);
-    elseif d==2
-        t = Tproj2(m,eVecm);
-    elseif d==4
-        t = Tproj4(m,eVecm);
-    end
-    co = lco(U,T,eVecm,t);
-    [mu,nu,stop] = ffw_ls(co,pflag);
-    if mu==0
-        U = sqrt(nu)*eVecm;
-    elseif nu==0
-        U = sqrt(mu)*U;
-    else
-        U = [sqrt(mu)*U, sqrt(nu)*eVecm];
-    end
-    
-    
-    % *** BFGS step ***
-    if options_bfgs.on
-		 if pflag
-			 tau = getoptions(options_bfgs,'reg',inf);
-			 fbfgs = @(U) f(U) + 1/2/tau*(norm(U,'fro')^2-M)^2; %regularization for trace constraint
-			 gbfgs = @(U) 2*g(U,U) + 2/tau*(norm(U,'fro')^2-M)*U;
-		 else
-			 fbfgs = f;
-			 gbfgs = @(U) 2*g(U,U);
-		 end
-		 tic;
-		 [U,nBFGS] = ffw_bfgs(U,fbfgs,gbfgs,options_bfgs);
-		 time_bfgs = toc;
-    end
-    
-    % update monitors
-    niter = niter+1;
-    
-    % display
-	 if strcmp(verbose,'on')
-    	fprintf('%-3i %-+4.4e  %-+4.2e  %-4i (%4.1f)  %-.1e  %-4i (%4.1f)\n', ...
-        niter,f(U),crit,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
-	 end
+
+	if strcmp(verbose,'debug')
+		checkgradient(@(U)f(Tproj(U)), @(U)2*g(Tproj(U),U),U);
+		checkgradient(@(U)1/rho*Tpen(U,Tproj(U)), @(U)2/rho*Tpen_g(U,Tproj(U),U),U);
+		checkgradient(@(U)f(Tproj(U)) + 1/rho*Tpen(U,Tproj(U)), @(U)2*(g(Tproj(U),U) + 1/rho*Tpen_g(U,Tproj(U),U)), U);
+	end
+	E = [E; fval];
+
+	% *** Linear Minimization Oracle ***
+	g_lmo  = @(h) g(T,h) + 1/rho * Tpen_g(U,T,h);
+	g_lmo1 = @(h) Om .* g_lmo( Om.* h);
+	tic;
+	[eVecm,nPI] = ffw_lmo(g_lmo1,v0,options_lmo);
+	time_lmo = toc;
+	eVecm = Om .* eVecm;
+
+	% stopping criterion
+	ege  = eVecm' * g_lmo(eVecm);
+	crit = ege;
+	%crit = la*rho/(la+rho) * crit; % scaling?
+
+
+	% *** Frank-Wolfe update (with linesearch) ***
+	t = Tproj(eVecm);
+	%co = lco(U,T,eVecm,t);
+	[mu,nu,stop] = ffw_ls(lco,U,T,eVecm,t,f0,rho,Dnumel,pflag);
+	if mu==0
+		U = sqrt(nu)*eVecm;
+	elseif nu==0
+		U = sqrt(mu)*U;
+	else
+		U = [sqrt(mu)*U, sqrt(nu)*eVecm];
+	end
+
+
+	% *** BFGS step ***
+	%profile on;
+	if options_bfgs.on
+		tic;
+		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,Tproj,U,rho,pflag,options_bfgs);
+		time_bfgs = toc;
+	end
+	%profile viewer;
+
+	% update
+	niter = niter+1;
+	T = Tproj(U);
+	fval = f(T) + 1/rho * Tpen(U,T);
+
+	% display
+	if strcmp(verbose,'on')
+		fprintf('%-3i %-+17.10e  %-+13.6e  %-5i (%5.1f)  %-11.4e  %-5i (%5.1f)\n', ...i
+			niter,fval,crit,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
+	end
 end
 
 if strcmp(verbose,'on')
+	fprintf('-------------------------------------------------------------------------------\n');
 	if crit >= -tol
-		fprintf('iterations stopped: tolerance reachedi\n');
+		fprintf('iterations stopped: tolerance reached\n');
 	else
 		fprintf('maximum iterations reached\n');
 	end
+	fprintf('\n\n');
 end
 
 info.E 	 = E;
 info.crit = crit; % final value of criterion
 
 end
+
+
 
 function opt_bfgs = set_bfgs_options(options)
 opt_bfgs.on              = getoptions(options, 'bfgsOn', 1);

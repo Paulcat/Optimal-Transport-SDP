@@ -43,8 +43,8 @@ Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
 %Cr = prod(nn)^2; %??
 Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
-la  = 1e-5*Cl; % "unbalanced" penalization 
-rho = 1e-6*Cr; % toeplitz penalization
+la  = 1e-4*Cl; % "unbalanced" penalization 
+rho = 1e-3*Cr; % toeplitz penalization
 
 
 
@@ -57,8 +57,9 @@ cost = ifftshift(cost);
 
 % variable's size and functionals
 mm		 = nn+1;
-[f,f0] = ot1_fobj(mm,cost,c1,c2,la,rho);
-[g,gU] = ot1_fgrad(mm,cost,c1,c2,f0,la,rho);
+[f,f0] = ot1_fobj(mm,cost,c1,c2,la);
+g = ot1_fgrad(mm,cost,c1,c2,f0,la);
+
 
 % load problem
 problem = struct;
@@ -66,10 +67,10 @@ problem = struct;
 problem.name		= 'OT';
 problem.vardim 	= mm; % size
 problem.fobj 		= f; % objective
-problem.gscaling	= 1/f0; % scaling constant st f(0)=1
+problem.f0			= f0; % scaling constant st f(0)=1
 problem.grad 		= g; % gradient
-problem.grad_pre  = gU; % gradient with partial precomputations
-problem.hparams	= [la,rho];
+%problem.grad_pre  = gU; % gradient with partial precomputations
+problem.hyper		= la;
 problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la,rho); % coefficients for line-search
 % ******************
 % ******************
@@ -83,11 +84,13 @@ options = struct;
 %
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 10; % max iterations for ffw
+options.maxiter		= 20; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500; 
 options.lmoTol 		= 1e-10;
 options.lmoMaxIter 	= 1e3;
+options.rho				= rho;
+options.display		= 'on';
 % ************************
 % ************************
 
@@ -128,6 +131,7 @@ U = FFW(problem,options);
 
 % prony extraction
 options_prony.factorized = 1;
+options_prony.jdiag = 'random';
 [x,a] = mvprony(U,nn,options_prony);
 
 % display
@@ -173,4 +177,4 @@ Mr = Ur*Ur';
 % ffw output moment matrix
 M	= U*U';
 
-fprintf('reconstruction errors: %d', norm(M0-M,'fro')/norm(M0,'fro'));
+fprintf('reconstruction errors: %d\n', norm(M0-M,'fro')/norm(M0,'fro'));

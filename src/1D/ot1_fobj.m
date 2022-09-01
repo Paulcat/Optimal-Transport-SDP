@@ -1,6 +1,9 @@
-function [Fn,normalization] = ot1_fobj(m,cost,u1,u2,la,rho)
+function [Fn,normalization] = ot1_fobj(m,cost,u1,u2,la)
 %FOBJ OT objective for FFW (1D)
-%   Detailed explanation goes here
+%   Unbalanced optimal transport energy. Marginal constraints are penalized with MMD
+%	 If T are the moments of the transport plan, the objective reads
+%	 
+%	 	f(T) = <cost|T> + 1/(4*la) * (MMD(T1,u1) + MMD(T2,u2))
 
 debug = 0;
 
@@ -11,28 +14,20 @@ f0 = 1;
 
 % helper
 d = length(m);
-normT2 = @(T) sum( Dnumel2(m) .* abs(T).^2, 1:d);
+%normT2 = @(T) sum( Dnumel2(m) .* abs(T).^2, 1:d);
 
-% objective part: terms depending on TVALS
-FT = @(T) real(trace(cost'*T)) + ...
-    1/4/la  * ( norm(T(:,1)-u1,'fro')^2 + norm(T(1,:).'-u2,'fro')^2 ) + ...
-    -1/2/rho * normT2(T);
+% objective in terms of Toeplitz entries
+F = @(T) real(trace(cost'*T)) + ...
+	1/4/la * ( norm(T(:,1)-u1,'fro')^2 + norm(T(1,:).'-u2,'fro')^2 );
 
-% objective
-%F = @(U) f0 * ( FT(Tproj2(m,U)) + 1/2/rho * norm(U'*U,'fro')^2 );
-%normalization = f0;
-F = @(U) FT(Tproj2(m,U)) + 1/2/rho * norm(U'*U, 'fro')^2;
 
 normalization = f0; %f(0)
 %normalization = F(ones(prod(m),1)); % f(1)...
 
-Fn = @(U) F(U) / normalization;
+Fn = @(T) F(T) / normalization;
 
 if debug
     warning('debug mode!!');
-    FT = @(T) 1/4/la * ( norm(T(:,1)-u1,'fro')^2 );
-    %F = @(U) 1/2*normT2(Tproj2(m,U));
-	 F = @(U) FT(Tproj2(m,U));
 end
 
 end
