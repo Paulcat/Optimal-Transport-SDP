@@ -14,10 +14,10 @@ flatc = @(Z) [real(Z(:)); imag(Z(:))];
 
 if flag_constraint
 	tau = getoptions(options,'reg',inf);
-	f = @(X,TX) f_user(TX) + 1/2/tau * (norm(U,'fro')^2 - M)^2 ... % regularization for trace constraint
+	f = @(X,TX) f_user(TX) + 1/2/tau * (norm(X,'fro')^2 - M)^2 ... % regularization for trace constraint
 		+ 1/rho * Tpen(X,TX);
-	g = @(X,TX) 2*g_user(TX) + 2/tau * (norm(U,'fro')^2 - M)*U ...
-		+ 2/rho * Tpen_g(X,TX);
+	g = @(X,TX) 2*g_user(TX,X) + 2/tau * (norm(X,'fro')^2 - M)*X ...
+		+ 2/rho * Tpen_g(X,TX,X);
 else
 	f = @(X,TX) f_user(TX) 	 + 1/rho * Tpen(X,TX);
 	g = @(X,TX) 2*g_user(TX,X) + 2/rho * Tpen_g(X,TX,X);
