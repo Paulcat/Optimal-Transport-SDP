@@ -14,7 +14,7 @@ a2 = ones(s2,1)/s2;
 
 
 %% moments of marginals
-[n1,n2]  = deal(10,10);
+[n1,n2]  = deal(25,25);
 nn = [n1 n2];
 % 1st marginal
 c1 = exp(-2i*pi*(-n1:n1)'*x1(:)') * a1(:);
@@ -43,8 +43,8 @@ Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
 %Cr = prod(nn)^2; %??
 Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
-la  = 1e-4*Cl; % "unbalanced" penalization 
-rho = 1e-3*Cr; % toeplitz penalization
+la  = 1e-6*Cl; % "unbalanced" penalization 
+rho = 1e-6*Cr; % toeplitz penalization
 
 
 
@@ -55,10 +55,13 @@ cost(n1:n1+2,n2:n2+2) = [0 0 -1/4; 0 1/2 0; -1/4 0 0];
 cost = ifftshift(cost);
 
 
-% variable's size and functionals
+% variable size and functionals
 mm		 = nn+1;
 [f,f0] = ot1_fobj(mm,cost,c1,c2,la);
 g = ot1_fgrad(mm,cost,c1,c2,f0,la);
+[Tpen,~,Tproj] = ffw_Tpen(mm);
+%mids = marginals(nn,'colex',1);
+%mids = cellfun(@(x)ifftshift(x),mids,'UniformOutput',false);
 
 
 % load problem
@@ -84,7 +87,7 @@ options = struct;
 %
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 20; % max iterations for ffw
+options.maxiter		= 25; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500; 
 options.lmoTol 		= 1e-10;
@@ -99,7 +102,7 @@ options.display		= 'on';
 % *** cvx ground truth ***
 % ************************
 % periodic cost
-C = sin(x1(:)-x2(:)').^2;
+C = sin(pi*(x1(:)-x2(:)')).^2;
 
 % cvx solver
 cvx_begin
@@ -110,6 +113,7 @@ sum(P0,2) == a1;
 %
 minimize( trace(C(:)'*P0(:)) );
 cvx_end
+val_cvx = trace(C(:)'*P0(:));
 
 % with Hungarian algorithm
 %rho = hungarianLSAP(C);
@@ -118,6 +122,17 @@ cvx_end
 [I,J] = find(P0 > 1e-7);
 x0 = [x1(I),x2(J)];
 a0 = P0(sub2ind([s1,s2],I,J));
+%
+[fY,fX] = meshgrid(0:n2,0:n1);
+F0 = exp(-2i*pi * (fX(:)*x0(:,1)' + fY(:)*x0(:,2)'));
+U0 = F0 .* sqrt(a0');
+T0 = Tproj(U0);
+%
+%M0 = U0*U0';
+%c01 = M0(mids{1});
+%c02 = M0(mids{2}); %TODO: there is certainly a smarter way to do this
+c01 = ifftshift(exp(-2i*pi*(-n1:n1)'*x0(:,1)') * a0(:));
+c02 = ifftshift(exp(-2i*pi*(-n2:n2)'*x0(:,2)') * a0(:));
 
 
 
@@ -127,12 +142,40 @@ a0 = P0(sub2ind([s1,s2],I,J));
 
 % *** OUR SOLVER ***
 % ******************
-U = FFW(problem,options);
+[U,info] = FFW(problem,options);
 
 % prony extraction
 options_prony.factorized = 1;
-options_prony.jdiag = 'random';
+options_prony.jdiag = 'cardoso';
 [x,a] = mvprony(U,nn,options_prony);
+
+
+% objective values
+val_ffw = info.E(end); % final value for FFW
+val_gt_in_penalized   = f(T0) + 1/rho*Tpen(U0,T0); % value of ground truth with FFW penalized objective
+%
+CC = sin(pi*(x(:,1)-x(:,2))).^2;
+val_ffw_in_constrained = sum(CC(:) .* a(:)); % value of FFW sol in constrained objective
+
+% marginals
+m1 = ifftshift(exp(-2i*pi*(-n1:n1)'*x(:,1)') * a(:));
+m2 = ifftshift(exp(-2i*pi*(-n2:n2)'*x(:,2)') * a(:));
+err_m1 = norm(m1-c1,'fro')/norm(c1,'fro');
+err_m2 = norm(m2-c2,'fro')/norm(c2,'fro');
+
+% toeplitz
+err_T = sqrt(2*Tpen(U,Tproj(U))) / norm(U'*U,'fro');
+
+
+fprintf('INFOS\n');
+fprintf('%35s : %-10.7f\n', 'FFW final value', val_ffw);
+fprintf('%35s : %-10.7f\n', 'GT (CVX) solution in penalized obj', val_gt_in_penalized);
+fprintf('%35s : %-10.7f\n', 'FFW solution in constrained obj', val_ffw_in_constrained);
+fprintf('%35s : %-10.7f\n', 'CVX final value', val_cvx);
+fprintf('%35s : %-10.7f\n', '1st marginal constraint violation', err_m1);
+fprintf('%35s : %-10.7f\n', '2nd marginal constraint violation', err_m2);
+fprintf('%35s : %-10.7f\n', 'Toeplitz constraint violation', err_T);
+
 
 % display
 clf, hold on;

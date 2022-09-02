@@ -48,19 +48,19 @@ v0    = ones(M,1)/sqrt(M);
 % DISPLAY
 if strcmp(verbose,'on')
 	fprintf('\n\n')
-	fprintf('-------------------------------- FFW Algorithm --------------------------------\n');
-	fprintf('%-25s %-25s %-25s\n', 'GENERAL OPTIONS', 'LMO OPTIONS', 'BFGS OPTIONS');
+	fprintf('------------------------------------------ FFW Algorithm ------------------------------------------\n');
+	fprintf('%-25s %-25s %-25s\n', '*GENERAL OPTIONS*', '*LMO OPTIONS*', '*BFGS OPTIONS*');
 	fprintf('%10s = %-11i  %10s = %-11i  %10s = %-11i\n', ...
 		'maxiter', maxit, 'maxiter', options_lmo.maxiter, 'maxiter', options_bfgs.MaxIter);
 	fprintf('%10s = %-12.1e %10s = %-12.1e %10s = %-12.1e\n', ...	
 		'tol', tol, 'tol', options_lmo.tol, 'tol', options_bfgs.optTol);
 	fprintf('%10s = %-10.4e\n', 'lambda', la);
 	fprintf('%10s = %-10.4e\n', 'rho', rho); 
-	fprintf('-------------------------------------------------------------------------------\n');
-	fprintf('%-3s %-18s %-14s %-5s %-8s %-12s %-5s %-8s', ...
-		'IT','OBJ','GAP','PI','(TIME)','LS:NEW/OLD','BFGS','(TIME)');
+	fprintf('---------------------------------------------------------------------------------------------------\n');
+	fprintf('%-3s %-18s %-14s %-14s %-5s %-8s %-12s %-5s %-8s', ...
+		'IT','OBJ','CRITERION','GAP CERTIF','PI','TIME(s)','LS:NEW/OLD','BFGS','TIME(s)');
 	fprintf('\n');
-	fprintf('-------------------------------------------------------------------------------\n');
+	fprintf('---------------------------------------------------------------------------------------------------\n');
 	%fprintf('%-3i %-+4.4e\n',niter,f(T) + 1/rho*Tpen(U,T))
 end
 
@@ -68,6 +68,8 @@ end
 
 
 E = []; % objective values
+time_bfgs_total = 0;
+time_lmo_total  = 0;
 while crit < -tol && niter < maxit
 
 	if strcmp(verbose,'debug')
@@ -83,12 +85,18 @@ while crit < -tol && niter < maxit
 	tic;
 	[eVecm,nPI] = ffw_lmo(g_lmo1,v0,options_lmo);
 	time_lmo = toc;
+	time_lmo_total = time_lmo_total + time_lmo;
 	eVecm = Om .* eVecm;
 
 	% stopping criterion
 	ege  = eVecm' * g_lmo(eVecm);
 	crit = ege;
 	%crit = la*rho/(la+rho) * crit; % scaling?
+	gap = real(trace(U'*g_lmo(U)) - ege);
+
+	if crit >= -tol
+		break;
+	end
 
 
 	% *** Frank-Wolfe update (with linesearch) ***
@@ -110,6 +118,7 @@ while crit < -tol && niter < maxit
 		tic;
 		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,Tproj,U,rho,pflag,options_bfgs);
 		time_bfgs = toc;
+		time_bfgs_total = time_bfgs_total + time_bfgs;
 	end
 	%profile viewer;
 
@@ -120,18 +129,21 @@ while crit < -tol && niter < maxit
 
 	% display
 	if strcmp(verbose,'on')
-		fprintf('%-3i %-+17.10e  %-+13.6e  %-5i (%5.1f)  %-11.4e  %-5i (%5.1f)\n', ...i
-			niter,fval,crit,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
+		fprintf('%-3i %-+18.10e %-+14.6e %-+14.6e %-5i %-8.2f %-12.4e %-5i %-8.2f\n', ...
+			niter,fval,crit,gap,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
 	end
 end
 
 if strcmp(verbose,'on')
-	fprintf('-------------------------------------------------------------------------------\n');
+	fprintf('---------------------------------------------------------------------------------------------------\n');
 	if crit >= -tol
-		fprintf('iterations stopped: tolerance reached\n');
+		fprintf('Iterations stopped: tolerance reached\n');
 	else
-		fprintf('maximum iterations reached\n');
+		fprintf('Iterations stopped: maximum number reached\n');
 	end
+	fprintf('%20s : %-10.5f\n', 'objective', fval);
+	fprintf('%20s : %-10.2f\n', 'time spent in LMO', time_lmo_total);
+	fprintf('%20s : %-10.2f\n', 'time spent in BFGS', time_bfgs_total);
 	fprintf('\n\n');
 end
 

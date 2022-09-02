@@ -13,6 +13,9 @@ function [supp,amp,info] = mvprony(mm,n,options)
 %       'ordering' - monomials ordering [ lex | (colex) | glex | gcolex ]
 %       'tol' - tolerance for svd (1e-3)
 
+fprintf('Multivariate Prony\n')
+fprintf('------------------\n');
+
 M = size(mm,1);
 d = numel(n);
 
@@ -163,27 +166,29 @@ if positive
 	amp(amp<0) = eps;
 end
 
+fprintf('------------------\n\n');
+
 % *** additional infos ***
 % ************************
 info.modulus = modulus;
 end
 
 function [U,S,V] = mysvd(M,tol)
-disp('computing svd...')
+fprintf('computing svd...')
 
 [U,S,V] = svd(M,'econ'); S = diag(S);
 I = find(abs(S)>tol*max(abs(S)));
 U = U(:,I); V = V(:,I); S = S(I);
 
-disp('done')
+fprintf(' done\n')
 end
 
 function [U,S,V] = mysvdf(X,tol)
-disp('computing svd...')
+fprintf('computing svd...')
 
 [U,S] = svd(X,'econ'); S = diag(S).^2;
 I = find(abs(S)>tol*max(abs(S)));
 U = U(:,I); V = U; S = S(I);
 
-disp('done')
+fprintf(' done\n')
 end
