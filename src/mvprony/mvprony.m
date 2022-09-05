@@ -25,6 +25,7 @@ shift_mode = getoptions(options,'shift_mode','kunis');
 jdiag_step = getoptions(options,'jdiag','cardoso');
 ordering   = getoptions(options,'ordering','colex');
 tol        = getoptions(options,'tol',1e-3);
+verb 		  = getoptions(options,'verbose',1);
 
 % only 'positive' moments?
 positive = (M==prod(n+1));
@@ -120,7 +121,7 @@ if strcmp(jdiag_step,'random')
 else
     As = cell2mat(N);
     As = reshape(As,[size(N{1}),d]);
-    [H,~] = jeigen_pcg(As,'init','eye','verbose',1);
+    [H,~] = jeigen_pcg(As,'init','eye','verbose',verb);
     H = inv(H);
 end
 
