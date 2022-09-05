@@ -109,16 +109,16 @@ options.display 		= 'on';
 % *** cvx ground truth ***
 % ************************
 % periodic cost
-XB = reshape(xA,[sA,1,2]);
-XA = reshape(xB,[1,sB,2]);
+XA = reshape(xA,[sA,1,2]);
+XB = reshape(xB,[1,sB,2]);
 C 	= sum( sin(pi*(XA-XB)).^2, 3);
 
 % cvx solver
 cvx_begin
 variable P0(sA,sB) nonnegative
 %
-sum(P0,1) == a.';
-sum(P0,2) == b;
+sum(P0,1) == b.';
+sum(P0,2) == a;
 %
 minimize( C(:)'*P0(:) );
 cvx_end
