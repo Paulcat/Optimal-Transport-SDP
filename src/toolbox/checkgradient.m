@@ -1,6 +1,6 @@
 function checkgradient(f,g,x)
 %CHECKGRAD Numerical validation for gradient
-%   Detailed explanation goes here
+%   CHECKGRADIENT(f,g,x)
 
 ndir = 100; % nb of directional derivatives
 e    = 1e-4;
@@ -27,6 +27,8 @@ subplot(1,2,2), hold on;
 plot(1:ndir, imag(df),   '.');
 plot(1:ndir, imag(df_u), 'o');
 title('Imaginary part');
+
+drawnow;
 
 %df_u
 %df ./ df_u

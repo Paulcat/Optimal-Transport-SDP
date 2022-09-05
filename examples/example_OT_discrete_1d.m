@@ -74,7 +74,7 @@ problem.f0			= f0; % scaling constant st f(0)=1
 problem.grad 		= g; % gradient
 %problem.grad_pre  = gU; % gradient with partial precomputations
 problem.hyper		= la;
-problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la,rho); % coefficients for line-search
+problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
 % ******************
 % ******************
 
@@ -83,8 +83,7 @@ problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la,rho); % coefficients for line-s
 
 % ***** load solver options *****
 % ********************************
-options = struct;
-%
+options = struct
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
 options.maxiter		= 25; % max iterations for ffw
@@ -111,9 +110,9 @@ variable P0(s1,s2) nonnegative
 sum(P0,1) == a2.';
 sum(P0,2) == a1;
 %
-minimize( trace(C(:)'*P0(:)) );
+minimize( C(:)'*P0(:) );
 cvx_end
-val_cvx = trace(C(:)'*P0(:));
+val_cvx = C(:)'*P0(:);
 
 % with Hungarian algorithm
 %rho = hungarianLSAP(C);

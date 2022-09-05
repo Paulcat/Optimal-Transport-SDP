@@ -1,4 +1,4 @@
-function coeffs = ot1_lscoeffs(m,cost,u1,u2,f0,la,rho)
+function coeffs = ot1_lscoeffs(m,cost,u1,u2,f0,la)
 %UNTITLED6 Summary of this function goes here
 %   Detailed explanation goes here
 

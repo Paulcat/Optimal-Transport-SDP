@@ -1,9 +1,9 @@
-function coeffs = ot2_lscoeffs(m,cost,u1,u2,la,rho)
+function coeffs = ot2_lscoeffs(m,cost,u1,u2,f0,la)
 %UNTITLED19 Summary of this function goes here
 %   Detailed explanation goes here
 
 % scaling
-f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
+%f0 = 4*la / (norm(u1,'fro')^2 + norm(u2,'fro')^2);
 
 % helpers
 fro2   = @(x) norm(x(:),'fro')^2;

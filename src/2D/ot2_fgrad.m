@@ -7,6 +7,11 @@ debug = 0;
 %f0 = 4*la / (norm(u1(:),'fro')^2 + norm(u2(:),'fro')^2);
 %f0 = 1;
 
+% check size
+if size(u1,1)~=size(u1,2)
+	error('moment vector is incorrectly shaped');
+end
+
 % helpers
 N = 1./Dnumel4(m);
 I1 = zeros(2*m-1); I1(:,:,1,1) = 1;
