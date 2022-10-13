@@ -14,7 +14,7 @@ a2 = ones(s2,1)/s2;
 
 
 %% moments of marginals
-[n1,n2]  = deal(25,25);
+[n1,n2]  = deal(35,35);
 nn = [n1 n2];
 % 1st marginal
 c1 = exp(-2i*pi*(-n1:n1)'*x1(:)') * a1(:);
@@ -57,9 +57,9 @@ cost = ifftshift(cost);
 
 % variable size and functionals
 mm		 = nn+1;
-[f,f0] = ot1_fobj(mm,cost,c1,c2,la);
-g = ot1_fgrad(mm,cost,c1,c2,f0,la);
-[Tpen,~,Tproj] = ffw_Tpen(mm);
+[f,f0] = ot_fobj(mm,cost,c1,c2,la);
+g = ot_fgrad(mm,cost,c1,c2,f0,la);
+Tpen = ffw_Tpen(mm);
 %mids = marginals(nn,'colex',1);
 %mids = cellfun(@(x)ifftshift(x),mids,'UniformOutput',false);
 
@@ -74,7 +74,7 @@ problem.f0			= f0; % scaling constant st f(0)=1
 problem.grad 		= g; % gradient
 %problem.grad_pre  = gU; % gradient with partial precomputations
 problem.hyper		= la;
-problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
+problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
 % ******************
 % ******************
 
@@ -83,10 +83,10 @@ problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-searc
 
 % ***** load solver options *****
 % ********************************
-options = struct
+options = struct;
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 25; % max iterations for ffw
+options.maxiter		= 5; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500; 
 options.lmoTol 		= 1e-10;
@@ -125,7 +125,7 @@ a0 = P0(sub2ind([s1,s2],I,J));
 [fY,fX] = meshgrid(0:n2,0:n1);
 F0 = exp(-2i*pi * (fX(:)*x0(:,1)' + fY(:)*x0(:,2)'));
 U0 = F0 .* sqrt(a0');
-T0 = Tproj(U0);
+T0 = Tprojn(mm,U0);
 %
 %M0 = U0*U0';
 %c01 = M0(mids{1});
@@ -141,11 +141,14 @@ c02 = ifftshift(exp(-2i*pi*(-n2:n2)'*x0(:,2)') * a0(:));
 
 % *** OUR SOLVER ***
 % ******************
+profile on
 [U,info] = FFW(problem,options);
+profile viewer
 
 % prony extraction
 options_prony.factorized = 1;
 options_prony.jdiag = 'cardoso';
+options_prony.verbose = 0;
 [x,a] = mvprony(U,nn,options_prony);
 
 
@@ -163,7 +166,7 @@ err_m1 = norm(m1-c1,'fro')/norm(c1,'fro');
 err_m2 = norm(m2-c2,'fro')/norm(c2,'fro');
 
 % toeplitz
-err_T = sqrt(2*Tpen(U,Tproj(U))) / norm(U'*U,'fro');
+err_T = sqrt(2*Tpen(U,Tprojn(mm,U))) / norm(U'*U,'fro');
 
 
 fprintf('INFOS\n');

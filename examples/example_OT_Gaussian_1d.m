@@ -68,9 +68,9 @@ cost = ifftshift(cost);
 
 % variable's size and functionals
 mm     = nn+1;
-[f,f0] = ot1_fobj(mm,cost,c1,c2,la);
-g = ot1_fgrad(mm,cost,c1,c2,f0,la);
-[Tpen,~,Tproj] = ffw_Tpen(mm);
+[f,f0] = ot_fobj(mm,cost,c1,c2,la);
+g = ot_fgrad(mm,cost,c1,c2,f0,la);
+Tpen = ffw_Tpen(mm);
 
 % load problem
 problem = struct;
@@ -82,7 +82,7 @@ problem.f0			= f0;
 problem.grad 		= g;
 %problem.grad_pre 	= gU;
 problem.hyper 	= la;
-problem.ls 			= ot1_lscoeffs(mm,cost,c1,c2,f0,la);
+problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la);
 % ***************
 % ***************
 
@@ -127,7 +127,7 @@ a0 = P0(sub2ind([s,s],I,J));
 [fY,fX] = meshgrid(0:n2,0:n1);
 F0 = exp(-2i*pi * (fX(:)*x0(:,1)' + fY(:)*x0(:,2)'));
 U0 = F0 .* sqrt(a0');
-T0 = Tproj(U0);
+T0 = Tprojn(mm,U0);
 %
 c01 = ifftshift(exp(-2i*pi*(-n1:n1)'*x0(:,1)') * a0(:));
 c02 = ifftshift(exp(-2i*pi*(-n2:n2)'*x0(:,2)') * a0(:));
@@ -161,7 +161,7 @@ err_m1 = norm(m1-c1,'fro')/norm(c1,'fro');
 err_m2 = norm(m2-c2,'fro')/norm(c2,'fro');
 
 % toeplitz
-err_T = sqrt(2*Tpen(U,Tproj(U))) / norm(U'*U,'fro');
+err_T = sqrt(2*Tpen(U,Tprojn(mm,U))) / norm(U'*U,'fro');
 
 
 fprintf('INFOS\n');

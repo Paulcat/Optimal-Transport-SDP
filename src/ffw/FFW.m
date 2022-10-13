@@ -33,14 +33,14 @@ rho 		= getoptions(options,'rho',1e-3);
 
 
 % Toeplitz penalization helper
-[Tpen,Tpen_g,Tproj,~,Dnumel] = ffw_Tpen(m);
+[Tpen,Tpen_g] = ffw_Tpen(m);
 
 
 % *** Initialization ***
 niter = 0;
 crit  = -Inf;
 U     = U0;
-T 		= Tproj(U);
+T 		= Tprojn(m,U);
 fval  = f(T) + 1/rho * Tpen(U,T);
 v0    = ones(M,1)/sqrt(M);
 %
@@ -49,6 +49,12 @@ v0    = ones(M,1)/sqrt(M);
 if strcmp(verbose,'on')
 	fprintf('\n\n')
 	fprintf('------------------------------------------ FFW Algorithm ------------------------------------------\n');
+	fprintf('Fourier Frank-Wolfe solver for low-rank semidefinite programming, see %s\n', '<a href="https://epubs.siam.org/doi/10.1137/19M124071X"> Catala, Duval, Peyré [2019] </a>');
+	fprintf('**\n');
+	fprintf('%-10s = %-s\n', 'problem', type);
+	fprintf('%-10s = %-i\n', 'dimension', d);
+	fprintf('%-10s = ', 'order'); fprintf('%-g ', m); fprintf('(size = %i x %i)\n', M, M); 
+	fprintf('---------------------------------------------------------------------------------------------------\n');
 	fprintf('%-25s %-25s %-25s\n', '*GENERAL OPTIONS*', '*LMO OPTIONS*', '*BFGS OPTIONS*');
 	fprintf('%10s = %-11i  %10s = %-11i  %10s = %-11i\n', ...
 		'maxiter', maxit, 'maxiter', options_lmo.maxiter, 'maxiter', options_bfgs.MaxIter);
@@ -73,9 +79,10 @@ time_lmo_total  = 0;
 while crit < -tol && niter < maxit
 
 	if strcmp(verbose,'debug')
-		checkgradient(@(U)f(Tproj(U)), @(U)2*g(Tproj(U),U),U);
-		checkgradient(@(U)1/rho*Tpen(U,Tproj(U)), @(U)2/rho*Tpen_g(U,Tproj(U),U),U);
-		checkgradient(@(U)f(Tproj(U)) + 1/rho*Tpen(U,Tproj(U)), @(U)2*(g(Tproj(U),U) + 1/rho*Tpen_g(U,Tproj(U),U)), U);
+		Tp = @(U) Tprojn(m,U);
+		checkgradient(@(U)f(Tp(U)), @(U)2*g(Tp(U),U),U);
+		checkgradient(@(U)1/rho*Tpen(U,Tp(U)), @(U)2/rho*Tpen_g(U,Tp(U),U),U);
+		checkgradient(@(U)f(Tp(U)) + 1/rho*Tpen(U,Tp(U)), @(U)2*(g(Tp(U),U) + 1/rho*Tpen_g(U,Tp(U),U)), U);
 	end
 	E = [E; fval];
 
@@ -100,9 +107,9 @@ while crit < -tol && niter < maxit
 
 
 	% *** Frank-Wolfe update (with linesearch) ***
-	t = Tproj(eVecm);
+	t = Tprojn(m,eVecm);
 	%co = lco(U,T,eVecm,t);
-	[mu,nu,stop] = ffw_ls(lco,U,T,eVecm,t,f0,rho,Dnumel,pflag);
+	[mu,nu,stop] = ffw_ls(lco,m,U,T,eVecm,t,f0,rho,pflag);
 	if mu==0
 		U = sqrt(nu)*eVecm;
 	elseif nu==0
@@ -116,15 +123,16 @@ while crit < -tol && niter < maxit
 	%profile on;
 	if options_bfgs.on
 		tic;
-		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,Tproj,U,rho,pflag,options_bfgs);
+		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,m,U,rho,pflag,options_bfgs);
 		time_bfgs = toc;
 		time_bfgs_total = time_bfgs_total + time_bfgs;
 	end
 	%profile viewer;
+	
 
 	% update
 	niter = niter+1;
-	T = Tproj(U);
+	T = Tprojn(m,U);
 	fval = f(T) + 1/rho * Tpen(U,T);
 
 	% display

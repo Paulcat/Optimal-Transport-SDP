@@ -1,4 +1,4 @@
-function [mu,nu,stop] = ffw_ls(ls_co,U,T,v,s,f0,rho,Dnumel,flag)
+function [mu,nu,stop] = ffw_ls(ls_co,m,U,T,v,s,f0,rho,flag)
 %UNTITLED7 Summary of this function goes here
 %   Detailed explanation goes here
 
@@ -6,8 +6,8 @@ debug = 0;
 stop = 0;
 
 
-dotT = @(T1,T2) real(sum(Dnumel .* conj(T1) .* T2, 'all'));
-normT = @(T) sum(Dnumel .* abs(T).^2, 'all');
+dotT = @(T1,T2) real(sum(Dnumeln(m) .* conj(T1) .* T2, 'all'));
+normT = @(T) sum(Dnumeln(m) .* abs(T).^2, 'all');
 dotM = @(M1,M2) real(sum(abs(M1'*M2).^2, 'all'));
 
 co = ls_co(U,T,v,s);

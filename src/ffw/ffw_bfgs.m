@@ -1,4 +1,4 @@
-function [U,nit] = ffw_bfgs(f_user,g_user,Tpen,Tpen_g,Tproj,U0,rho,flag_constraint,options)
+function [U,nit] = ffw_bfgs(f_user,g_user,Tpen,Tpen_g,m,U0,rho,flag_constraint,options)
 %FFW_BFGS BFGS step in FFW algorithm
 
 deal2 = @(varargin) deal(varargin{1:nargout});
@@ -24,8 +24,8 @@ else
 end
 
 fg  = @(X,TX) deal2(f(X,TX), flatc(g(X,TX)));
-fg1 = @(X) fg( X, Tproj(X) );
-fg2 = @(Z) fg1(reshc(Z)); %TODO: is it useful to decompose this much?
+fg1 = @(X) fg( X, Tprojn(m,X) );
+fg2 = @(Z) fg1(reshc(Z)); %TODO: is it slower to decompose this much?
 
 %checkgradient(fb,gb,flatc(U));
 %drawnow;
