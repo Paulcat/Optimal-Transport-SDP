@@ -13,6 +13,6 @@ r = size(U,2);
 U = reshape(U,[m,r]);
 
 PU = padarray(U,[m-1,0],'post');
-Tvals = sum( ifftd(d,abs(fftd(d,PU)).^2), 3) ./ Dnumeln(m);
+Tvals = sum( ifftd(d,abs(fftd(d,PU)).^2), d+1) ./ Dnumeln(m);
 
 end
