@@ -1,4 +1,4 @@
-% example for invariant measure problem
+% logistic map example for invariant measure problem
 
 % ***** set up problem ****
 % *************************
@@ -40,6 +40,12 @@ plot(t,real(eVec(:,J)),'linewidth',3);
 n  = 30;
 Ft = exp(-2i*pi*(-n:n)'*t(:)');
 A  = 1/L * Ft * f_interp * Ft';
+
+% % simple check
+% B = fft2( full(f_interp .* ( exp(2i*pi*n*t(:)) .* exp(2i*pi*n*t(:)') )) );
+% B = 1/L * B(1:2*n+1,1:2*n+1);
+% norm(A-B)
+
 %
 [eVec_F,eVal_F] = eig(A); eVal_F = diag(eVal_F);
 [eVal_F_Mo,I_F] = sort(abs(eVal_F-1),'ascend');
@@ -59,8 +65,8 @@ rho = 1e-3;
 % variable size and functionals
 m = n+1;
 B = ifftshift(A - eye(2*n+1));
-[f,f0] = inv1_fobj(m,B,la,rho);
-[g,gU] = inv1_fgrad(m,B,f0,la,rho);
+[f,f0] = inv_fobj(m,B,la);
+g = inv_fgrad(m,B,f0,la);
 
 % load problem
 problem = struct;
@@ -68,11 +74,11 @@ problem = struct;
 problem.name = 'Invariant';
 problem.vardim = m;
 problem.fobj = f;
-problem.gscaling = 1/f0;
+problem.f0 = f0;
 problem.grad = g;
-problem.grad_pre = gU;
-problem.hparams = [la,rho];
-problem.ls = inv1_lscoeffs(m,B,f0,la,rho);
+%problem.grad_pre = gU;
+problem.hyper = la;
+problem.ls = inv_lscoeffs(m,B,f0,la);
 % *************************
 % *************************
 
@@ -85,7 +91,7 @@ options = struct;
 options.tol 			= 1e-5;
 options.init 			= ones(m,1)/sqrt(m);
 %options.init			= [1;zeros(m-1,1)];
-options.maxiter 		= 30;
+options.maxiter 		= 40;
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
 options.bfgsReg 		= 1e-4; % regularization of constraint in bfgs. Scaling?
@@ -113,7 +119,7 @@ minimize( 1/2 * pow_pos(norm(c0,'fro'),2) + 1/2/la*pow_pos(norm(A*c0-c0,'fro'),2
 cvx_end
 
 % Prony extraction
-options_prony.factorized = 0;
+options_prony.factorized = 0;i
 [x0,a0] = mvprony(T0,n,options_prony);
 
 % ************************
@@ -128,9 +134,9 @@ U = FFW(problem,options);
 options_prony.factorized = 1;
 [x,a] = mvprony(U,n,options_prony);
 
-% display
+%% display
 clf, hold on;
 stem(x0,a0,'filled','linewidth',2);
 stem(1-x,a,'filled','linewidth',2); % why 1-x????
-warning('somnething fishy here, 1-x instead of x is weird');
+warning('something fishy here, 1-x instead of x is weird');
 

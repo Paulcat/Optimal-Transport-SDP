@@ -5,17 +5,17 @@ function [U,info] = FFW(problem,options)
 
 
 % load problem parameters
-m  = problem.vardim;
-M  = prod(m);
-d  = numel(m);
+m = problem.vardim;
+M = prod(m);
+d = numel(m);
 %
-f   	= problem.fobj;
-f0 	= problem.f0;
-g   	= problem.grad;
+f     = problem.fobj;
+f0    = problem.f0;
+g     = problem.grad;
 %gt  	= problem.grad_pre;
-lco 	= problem.ls;
-type	= problem.name;
-la 	= getoptions(problem,'hyper',0);
+lco   = problem.ls;
+type  = problem.name;
+la    = getoptions(problem,'hyper',0);
 %scale = min(problem.hparams); % min la,rho to "normalize" criterion...
 %
 options_lmo  = set_lmo_options (options);
@@ -24,12 +24,12 @@ options_bfgs = set_bfgs_options(options);
 pflag = strcmp(type,'Invariant');
 
 % set options
-U0    	= getoptions(options,'init',zeros(M,1)); %TODO: add error when initialization do not satisfy constraint...
-Om    	= getoptions(options,'Om',ones(M,1));
-maxit 	= getoptions(options,'maxiter',20);
-tol   	= getoptions(options,'tol',1e-5);
+U0       = getoptions(options,'init',zeros(M,1)); %TODO: add error when initialization do not satisfy constraint...
+Om       = getoptions(options,'Om',ones(M,1));
+maxit    = getoptions(options,'maxiter',20);
+tol      = getoptions(options,'tol',1e-5);
 verbose 	= getoptions(options,'display','on');
-rho 		= getoptions(options,'rho',1e-3);
+rho      = getoptions(options,'rho',1e-3);
 
 
 % Toeplitz penalization helper
@@ -40,42 +40,45 @@ rho 		= getoptions(options,'rho',1e-3);
 niter = 0;
 crit  = -Inf;
 U     = U0;
-T 		= Tprojn(m,U);
+T 	   = Tprojn(m,U);
 fval  = f(T) + 1/rho * Tpen(U,T);
 v0    = ones(M,1)/sqrt(M);
 %
 
 % DISPLAY
 if strcmp(verbose,'on')
-	fprintf('\n\n')
-	fprintf('------------------------------------------ FFW Algorithm ------------------------------------------\n');
-	fprintf('Fourier Frank-Wolfe solver for low-rank semidefinite programming, see %s\n', '<a href="https://epubs.siam.org/doi/10.1137/19M124071X"> Catala, Duval, Peyré [2019] </a>');
-	fprintf('**\n');
-	fprintf('%-10s = %-s\n', 'problem', type);
-	fprintf('%-10s = %-i\n', 'dimension', d);
-	fprintf('%-10s = ', 'order'); fprintf('%-g ', m); fprintf('(size = %i x %i)\n', M, M); 
-	fprintf('---------------------------------------------------------------------------------------------------\n');
-	fprintf('%-25s %-25s %-25s\n', '*GENERAL OPTIONS*', '*LMO OPTIONS*', '*BFGS OPTIONS*');
-	fprintf('%10s = %-11i  %10s = %-11i  %10s = %-11i\n', ...
+   fprintf('\n\n')
+   fprintf('---------------------------------------------- FFW Algorithm -------------------------------------------------\n');
+   fprintf('Fourier Frank-Wolfe solver for low-rank semidefinite programming, see %s\n', '<a href="https://epubs.siam.org/doi/10.1137/19M124071X"> Catala, Duval, Peyré [2019] </a>');
+   fprintf('**\n');
+   fprintf('%-10s : %-s\n', 'problem', type);
+   fprintf('%-10s : %-i\n', 'dimension', d);
+   fprintf('%-10s : ', 'order'); fprintf('%-g ', m); fprintf('(size = %i x %i)\n', M, M); 
+   fprintf('--------------------------------------------------------------------------------------------------------------\n');
+   fprintf('%-25s %-25s %-25s\n', '*GENERAL OPTIONS*', '*LMO OPTIONS*', '*BFGS OPTIONS*');
+   fprintf('%10s = %-11i  %10s = %-11i  %10s = %-11i\n', ...
 		'maxiter', maxit, 'maxiter', options_lmo.maxiter, 'maxiter', options_bfgs.MaxIter);
-	fprintf('%10s = %-12.1e %10s = %-12.1e %10s = %-12.1e\n', ...	
+   fprintf('%10s = %-12.1e %10s = %-12.1e %10s = %-12.1e\n', ...	
 		'tol', tol, 'tol', options_lmo.tol, 'tol', options_bfgs.optTol);
-	fprintf('%10s = %-10.4e\n', 'lambda', la);
-	fprintf('%10s = %-10.4e\n', 'rho', rho); 
-	fprintf('---------------------------------------------------------------------------------------------------\n');
-	fprintf('%-3s %-18s %-14s %-14s %-5s %-8s %-12s %-5s %-8s', ...
-		'IT','OBJ','CRITERION','GAP CERTIF','PI','TIME(s)','LS:NEW/OLD','BFGS','TIME(s)');
-	fprintf('\n');
-	fprintf('---------------------------------------------------------------------------------------------------\n');
+   fprintf('%10s = %-10.4e\n', 'lambda', la);
+   fprintf('%10s = %-10.4e\n', 'rho', rho); 
+   fprintf('--------------------------------------------------------------------------------------------------------------\n');
+   fprintf('%-3s %-18s %-14s %-14s %-14s %-5s %-8s %-12s %-5s %-8s', ...
+		'IT','OBJ','CRITERION','GAP CERTIF','GRAD SNORM','PI','TIME(s)','LS:OLD/NEW','BFGS','TIME(s)');
+   fprintf('\n');
+   fprintf('------------------------------------------------------------------------------------------------------------------\n');
 	%fprintf('%-3i %-+4.4e\n',niter,f(T) + 1/rho*Tpen(U,T))
 end
 
 
 
 
-E = []; % objective values
-time_bfgs_total = 0;
-time_lmo_total  = 0;
+E_list    = []; % objective values
+ng_list   = [];
+gap_list  = [];
+ttot_bfgs = 0;
+ttot_lmo  = 0;
+%
 while crit < -tol && niter < maxit
 
 	if strcmp(verbose,'debug')
@@ -84,22 +87,31 @@ while crit < -tol && niter < maxit
 		checkgradient(@(U)1/rho*Tpen(U,Tp(U)), @(U)2/rho*Tpen_g(U,Tp(U),U),U);
 		checkgradient(@(U)f(Tp(U)) + 1/rho*Tpen(U,Tp(U)), @(U)2*(g(Tp(U),U) + 1/rho*Tpen_g(U,Tp(U),U)), U);
 	end
-	E = [E; fval];
+	E_list = [E_list; fval];
 
 	% *** Linear Minimization Oracle ***
 	g_lmo  = @(h) g(T,h) + 1/rho * Tpen_g(U,T,h);
 	g_lmo1 = @(h) Om .* g_lmo( Om.* h);
+	%
 	tic;
-	[eVecm,nPI] = ffw_lmo(g_lmo1,v0,options_lmo);
-	time_lmo = toc;
-	time_lmo_total = time_lmo_total + time_lmo;
-	eVecm = Om .* eVecm;
+	[eVecm,PI] = ffw_lmo(g_lmo1,v0,options_lmo);
+	t_lmo = toc;
+	nPI      = PI.niter;
+	ttot_lmo = ttot_lmo + t_lmo;
+	
+	% output of LMO
+	eVecm    = Om .* eVecm; % eigenvector fr minimal eigenvalue
 
-	% stopping criterion
-	ege  = eVecm' * g_lmo(eVecm);
-	crit = ege;
+	% upper bound on dual gap TODO: how to scale it?
+	ege      = eVecm' * g_lmo(eVecm);
+	crit     = ege;
 	%crit = la*rho/(la+rho) * crit; % scaling?
-	gap = real(trace(U'*g_lmo(U)) - ege);
+	gap      = real(trace(U'*g_lmo(U)) - ege);
+	gap_list = [gap_list,gap];
+
+	% check spectral norm of gradient
+	ng      = PI.eVmax; % maximal absolute eigenvalue of gradient
+	ng_list = [ng_list, ng];
 
 	if crit >= -tol
 		break;
@@ -124,39 +136,41 @@ while crit < -tol && niter < maxit
 	if options_bfgs.on
 		tic;
 		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,m,U,rho,pflag,options_bfgs);
-		time_bfgs = toc;
-		time_bfgs_total = time_bfgs_total + time_bfgs;
+		t_bfgs    = toc;
+		ttot_bfgs = ttot_bfgs + t_bfgs;
 	end
 	%profile viewer;
 	
 
 	% update
 	niter = niter+1;
-	T = Tprojn(m,U);
-	fval = f(T) + 1/rho * Tpen(U,T);
+	T     = Tprojn(m,U);
+	fval  = f(T) + 1/rho * Tpen(U,T);
 
 	% display
 	if strcmp(verbose,'on')
-		fprintf('%-3i %-+18.10e %-+14.6e %-+14.6e %-5i %-8.2f %-12.4e %-5i %-8.2f\n', ...
-			niter,fval,crit,gap,nPI,time_lmo,mu/nu,nBFGS,time_bfgs);
+		fprintf('%-3i %-+18.10e %-+14.6e %-+14.6e %-14.6e %-5i %-8.2f %-12.4e %-5i %-8.2f\n', ...
+			niter,fval,crit,gap,ng,nPI,t_lmo,mu/nu,nBFGS,t_bfgs);
 	end
 end
 
 if strcmp(verbose,'on')
-	fprintf('---------------------------------------------------------------------------------------------------\n');
+	fprintf('----------------------------------------------------------------------------------------------------------\n');
 	if crit >= -tol
 		fprintf('Iterations stopped: tolerance reached\n');
 	else
 		fprintf('Iterations stopped: maximum number reached\n');
 	end
 	fprintf('%20s : %-10.5f\n', 'objective', fval);
-	fprintf('%20s : %-10.2f\n', 'time spent in LMO', time_lmo_total);
-	fprintf('%20s : %-10.2f\n', 'time spent in BFGS', time_bfgs_total);
+	fprintf('%20s : %-10.2f\n', 'time spent in LMO', ttot_lmo);
+	fprintf('%20s : %-10.2f\n', 'time spent in BFGS', ttot_bfgs);
 	fprintf('\n\n');
 end
 
-info.E 	 = E;
-info.crit = crit; % final value of criterion
+info.E     = E_list;
+info.gap   = gap_list;
+info.ngrad = ng_list;
+info.crit  = crit; % final value of criterion
 
 end
 
@@ -179,7 +193,7 @@ opt_bfgs.reg             = getoptions(options, 'bfgsReg', Inf);
 end
 
 function opt_lmo = set_lmo_options(options)
-opt_lmo.tol     = getoptions(options, 'lmoTol', 1e-16);
-opt_lmo.maxiter = getoptions(options, 'lmoMaxIter', 1000); 
+opt_lmo.tol      = getoptions(options, 'lmoTol', 1e-16);
+opt_lmo.maxiter  = getoptions(options, 'lmoMaxIter', 1000); 
 end
 

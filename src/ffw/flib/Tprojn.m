@@ -1,12 +1,13 @@
 function Tvals = Tprojn(m,U)
 %TPROJn n-level Toeplitz projection
-%	TVALS = TPROJN(m,U) returns the 'diagonal' values corresponding to the
-%	projection of the matrix UU* on the set of n-level Toeplitz matrices.
+%   TVALS = TPROJN(m,U) returns the 'diagonal' values corresponding to the
+%   projection of the matrix UU* on the set of n-level Toeplitz matrices.
 %
-%	TVALS is a nD-array. Colexicographical ordering is assumed, and the 
-%	level-0 moment is the first entry in TVALS (fft-style),
+%   TVALS is a nD-array. Colexicographical ordering is assumed, and the 
+%   level-0 moment is the first entry in TVALS (fft-style).
 %
-%	Internal use only
+%   Internal use only.
+%   See also Tprodn.
 
 d = length(m);
 r = size(U,2);

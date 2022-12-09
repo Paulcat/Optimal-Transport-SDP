@@ -3,12 +3,12 @@ function [Fn,normalization] = ot_fobj(m,cost,u1,u2,la)
 %   Unbalanced optimal transport energy. Marginal constraints are penalized
 %   with MM discrepancies: if T are the moments of the transport plan, the
 %   objective reads
-%	 
-%	 	f(T) = <cost,T> + 1/(4*la) * (MMD(T1,u1) + MMD(T2,u2))
 %
-%	 up to some normalization.
+%      f(T) = <cost,T> + 1/(4*la) * (MMD(T1,u1) + MMD(T2,u2))
 %
-%	 See also OT_FGRAD.
+%   up to some normalization.
+%
+%   See also OT_FGRAD.
 
 debug = 0;
 
@@ -41,7 +41,7 @@ Fn = @(T) F(T) / normalization;
 
 
 if debug
-    warning('debug mode!!');
+	warning('debug mode!!');
 end
 
 end

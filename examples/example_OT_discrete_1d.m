@@ -14,7 +14,7 @@ a2 = ones(s2,1)/s2;
 
 
 %% moments of marginals
-[n1,n2]  = deal(35,35);
+[n1,n2]  = deal(20,20);
 nn = [n1 n2];
 % 1st marginal
 c1 = exp(-2i*pi*(-n1:n1)'*x1(:)') * a1(:);
@@ -43,8 +43,8 @@ Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
 %Cr = prod(nn)^2; %??
 Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
-la  = 1e-6*Cl; % "unbalanced" penalization 
-rho = 1e-6*Cr; % toeplitz penalization
+la  = 1e-3*Cl; % "unbalanced" penalization 
+rho = 1e-3*Cr; % toeplitz penalization
 
 
 
@@ -86,9 +86,9 @@ problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
 options = struct;
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 5; % max iterations for ffw
+options.maxiter		= 50; % max iterations for ffw
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
-options.bfgsMaxIter 	= 500; 
+options.bfgsMaxIter 	= 500;
 options.lmoTol 		= 1e-10;
 options.lmoMaxIter 	= 1e3;
 options.rho				= rho;

@@ -1,5 +1,10 @@
 function ifx = ifftd(d,x)
-%IFFTD d-dimensional inverse Fourier transform
+%IFFTD d-dimensional inverse discrete Fourier transform
+%   IFFTD(X) is the same as IFFTN(X) if X is a d-dimensional array. If not,
+%   IFFTD performs the discrete inverse Fourier transform along the first d
+%   dimensions.
+%
+%   See also fftd
 
 if d==1
 	ifx = ifft(x);

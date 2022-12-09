@@ -1,6 +1,13 @@
 function [mu,nu,stop] = ffw_ls(ls_co,m,U,T,v,s,f0,rho,flag)
-%UNTITLED7 Summary of this function goes here
-%   Detailed explanation goes here
+%FFW_LS Linesearch step in FFW algorithm
+%   [a,b] = FFW_LS(...) returns the coefficients such that f(a*T + b*S) is
+%   minimal among all pairs (a,b) such that a>=0, b>=0 and a+b <= or = 1
+%   (f and this last constraint depend on the problem)
+%
+%   Note that
+%      f(aT + bS) = 1/2*cxx*a^2 + 1/2*cyy*b^2 + cxy*a*b + cx*a + cy*b + cst
+%
+%   See also OT_LSCOEFFS, INV_LSCOEFFS
 
 debug = 0;
 stop = 0;
