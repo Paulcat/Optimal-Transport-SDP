@@ -1,4 +1,4 @@
-function [eVecm,nit] = ffw_lmo(g,v0,options)
+function [eVecm,infos] = ffw_lmo(g,v0,options)
 %FFW_LMO Linear minimization oracle over SDP cone
 %   [EVEC,EVAL] = FFW_LMO(G,V0,options) produces the minimal eigenvalue
 %   EVAL and a corresponding eigenvector EVEC of the gradient operator G,
@@ -14,6 +14,8 @@ gv  = g(v);
 ev  = v'*gv;
 nit = 0;
 
+tic;
+
 while norm(gv-ev*v,'fro')/abs(ev) > tol && nit < maxit
     v  = gv / norm(gv,'fro');
     gv = g(v);
@@ -21,6 +23,8 @@ while norm(gv-ev*v,'fro')/abs(ev) > tol && nit < maxit
     
     nit = nit+1;
 end
+
+infos.eVmax = abs(ev);
 
 if ev < 0 % then ev is the lowest eigenvalue
     eValm = ev;
@@ -46,7 +50,10 @@ else
     eVecm = v;
 end
 
-%infos.niter = nit;
+time = toc;
+
+infos.niter = nit;
+infos.time  = time;
 
 
 end

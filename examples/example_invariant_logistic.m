@@ -71,14 +71,14 @@ g = inv_fgrad(m,B,f0,la);
 % load problem
 problem = struct;
 %
-problem.name = 'Invariant';
+problem.name   = 'invariant';
 problem.vardim = m;
-problem.fobj = f;
-problem.f0 = f0;
-problem.grad = g;
-%problem.grad_pre = gU;
-problem.hyper = la;
-problem.ls = inv_lscoeffs(m,B,f0,la);
+problem.fobj   = f;
+problem.f0     = f0;
+problem.grad   = g;
+problem.cflag  = 'trace'; % trace constraint from invariant pb formulation
+problem.hyper  = la;
+problem.ls     = inv_lscoeffs(m,B,f0,la);
 % *************************
 % *************************
 
@@ -92,6 +92,7 @@ options.tol 			= 1e-5;
 options.init 			= ones(m,1)/sqrt(m);
 %options.init			= [1;zeros(m-1,1)];
 options.maxiter 		= 40;
+options.bfgsToolbox  = 'manopt';
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
 options.bfgsReg 		= 1e-4; % regularization of constraint in bfgs. Scaling?

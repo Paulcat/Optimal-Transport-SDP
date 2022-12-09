@@ -77,7 +77,7 @@ Tpen = ffw_Tpen(mm);
 % **********************
 problem = struct;
 %
-problem.name 	= 'OT';
+problem.name 	= 'optimal-transport';
 problem.vardim = mm;
 problem.fobj 	= f;
 problem.f0 		= f0;
@@ -95,6 +95,7 @@ options = struct;
 %
 options.tol 			= 1e-5;
 options.maxiter 		= 25;
+options.bfgsToolbox  = 'minfunc';
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
 options.lmoTol 		= 1e-10;

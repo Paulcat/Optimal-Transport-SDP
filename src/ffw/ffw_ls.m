@@ -26,7 +26,7 @@ cyy = cyy + 1/rho/f0 * (dotM(v,v) - normT(s));
 
 %TODO: unbounded linesearch???
 
-if flag == 1 % linear constraint is mu+nu=1, e.g. for invariant
+if strcmp(flag,'trace') % linear constraint is mu+nu=1, e.g. for invariant
 	a = cxx+cyy-2*cxy;
 	if a == 0 % can only happen at first iteration. Then S=X and we have found an optimum?
 		mu = 1;

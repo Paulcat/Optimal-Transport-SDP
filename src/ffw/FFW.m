@@ -12,16 +12,14 @@ d = numel(m);
 f     = problem.fobj;
 f0    = problem.f0;
 g     = problem.grad;
-%gt  	= problem.grad_pre;
 lco   = problem.ls;
 type  = problem.name;
+cflag = problem.cflag;
 la    = getoptions(problem,'hyper',0);
 %scale = min(problem.hparams); % min la,rho to "normalize" criterion...
 %
 options_lmo  = set_lmo_options (options);
 options_bfgs = set_bfgs_options(options);
-
-pflag = strcmp(type,'Invariant');
 
 % set options
 U0       = getoptions(options,'init',zeros(M,1)); %TODO: add error when initialization do not satisfy constraint...
@@ -93,11 +91,8 @@ while crit < -tol && niter < maxit
 	g_lmo  = @(h) g(T,h) + 1/rho * Tpen_g(U,T,h);
 	g_lmo1 = @(h) Om .* g_lmo( Om.* h);
 	%
-	tic;
-	[eVecm,PI] = ffw_lmo(g_lmo1,v0,options_lmo);
-	t_lmo = toc;
-	nPI      = PI.niter;
-	ttot_lmo = ttot_lmo + t_lmo;
+	[eVecm,iPI] = ffw_lmo(g_lmo1,v0,options_lmo);
+	ttot_lmo    = ttot_lmo + iPI.time;
 	
 	% output of LMO
 	eVecm    = Om .* eVecm; % eigenvector fr minimal eigenvalue
@@ -110,7 +105,7 @@ while crit < -tol && niter < maxit
 	gap_list = [gap_list,gap];
 
 	% check spectral norm of gradient
-	ng      = PI.eVmax; % maximal absolute eigenvalue of gradient
+	ng      = iPI.eVmax; % maximal absolute eigenvalue of gradient
 	ng_list = [ng_list, ng];
 
 	if crit >= -tol
@@ -121,7 +116,7 @@ while crit < -tol && niter < maxit
 	% *** Frank-Wolfe update (with linesearch) ***
 	t = Tprojn(m,eVecm);
 	%co = lco(U,T,eVecm,t);
-	[mu,nu,stop] = ffw_ls(lco,m,U,T,eVecm,t,f0,rho,pflag);
+	[mu,nu,stop] = ffw_ls(lco,m,U,T,eVecm,t,f0,rho,cflag);
 	if mu==0
 		U = sqrt(nu)*eVecm;
 	elseif nu==0
@@ -134,10 +129,9 @@ while crit < -tol && niter < maxit
 	% *** BFGS step ***
 	%profile on;
 	if options_bfgs.on
-		tic;
-		[U,nBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,m,U,rho,pflag,options_bfgs);
-		t_bfgs    = toc;
-		ttot_bfgs = ttot_bfgs + t_bfgs;
+		[U,iBFGS] = ffw_bfgs(f,g,Tpen,Tpen_g,m,U,rho,cflag,options_bfgs);
+		%
+		ttot_bfgs = ttot_bfgs + iBFGS.time;
 	end
 	%profile viewer;
 	
@@ -150,7 +144,7 @@ while crit < -tol && niter < maxit
 	% display
 	if strcmp(verbose,'on')
 		fprintf('%-3i %-+18.10e %-+14.6e %-+14.6e %-14.6e %-5i %-8.2f %-12.4e %-5i %-8.2f\n', ...
-			niter,fval,crit,gap,ng,nPI,t_lmo,mu/nu,nBFGS,t_bfgs);
+			niter,fval,crit,gap,ng,iPI.niter,iPI.time,mu/nu,iBFGS.niter,iBFGS.time);
 	end
 end
 
@@ -177,19 +171,26 @@ end
 
 
 function opt_bfgs = set_bfgs_options(options)
+opt_bfgs.toolbox         = getoptions(options,'bfgsToolbox','minfunc'); % minfunc | manopt
+
+% options for minfunc
 opt_bfgs.on              = getoptions(options, 'bfgsOn', 1);
-opt_bfgs.display         = 'off';                                    % off | final | iter | full | excessive
-opt_bfgs.optTol          = 1e-16;                                    % first-order optimality (exitflag 1)
+opt_bfgs.display         = 'off'; % off | final | iter | full | excessive
+opt_bfgs.optTol          = getoptions(options, 'bfgsOptTol', 1e-16); % first-order optimality (exitflag 1)
 opt_bfgs.progTol         = getoptions(options, 'bfgsProgTol', 1e-8); % parameters change (exitflag 2)
 opt_bfgs.MaxFunEvals     = 100000;
-opt_bfgs.MaxIter         = getoptions(options, 'bfgsMaxIter', 500);  % (exitflag 0)
+opt_bfgs.MaxIter         = getoptions(options, 'bfgsMaxIter', 500); % (exitflag 0)
 opt_bfgs.Method          = 'lbfgs';
 opt_bfgs.DerivativeCheck = 'off';
 opt_bfgs.Corr            = 15;
 opt_bfgs.Damped          = 0;
 opt_bfgs.numDiff         = 0; % use-provided gradient
-%
-opt_bfgs.reg             = getoptions(options, 'bfgsReg', Inf);
+opt_bfgs.reg             = getoptions(options, 'bfgsReg', Inf); % regularization in case of additional constraint
+
+% options for manopt
+opt_bfgs.maxiter          = getoptions(options, 'bfgsMaxIter', 500);
+opt_bfgs.verbosity        = 0;
+opt_bfgs.tolgradnorm      = getoptions(options, 'bfgsOptTol', 1e-16);
 end
 
 function opt_lmo = set_lmo_options(options)

@@ -67,14 +67,14 @@ Tpen = ffw_Tpen(mm);
 % load problem
 problem = struct;
 %
-problem.name		= 'OT';
-problem.vardim 	= mm; % size
-problem.fobj 		= f; % objective
-problem.f0			= f0; % scaling constant st f(0)=1
-problem.grad 		= g; % gradient
-%problem.grad_pre  = gU; % gradient with partial precomputations
-problem.hyper		= la;
-problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
+problem.name   = 'optimal-transport';
+problem.vardim = mm; % size
+problem.fobj   = f; % objective
+problem.f0     = f0; % scaling constant st f(0)=1
+problem.grad   = g; % gradient
+problem.cflag  = 'none'; % unconstrained semidefinite program
+problem.hyper  = la;
+problem.ls     = ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
 % ******************
 % ******************
 
@@ -86,7 +86,8 @@ problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-search
 options = struct;
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 50; % max iterations for ffw
+options.maxiter		= 10; % max iterations for ffw
+options.bfgsToolbox  = 'manopt';
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500;
 options.lmoTol 		= 1e-10;
