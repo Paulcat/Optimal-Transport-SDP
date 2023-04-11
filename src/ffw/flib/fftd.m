@@ -1,6 +1,6 @@
 function fx = fftd(d,x)
 %FFTD d-dimensional discrete Fourier transform
-%   FFTD(X) is the same as FFTN(X) if X is a d-dimensional array. If not,
+%   FFTD(D,X) is the same as FFTN(X) if X is a d-dimensional array. If not,
 %   FFTD if the discrete Fourier transform along the first d dimensions.
 %
 %   Internal use only

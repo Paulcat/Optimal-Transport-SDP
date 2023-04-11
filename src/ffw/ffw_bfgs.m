@@ -8,6 +8,7 @@ r = size(U0,2);
 
 solver = getoptions(options,'toolbox','minfunc');
 
+
 switch solver
 	case 'minfunc'
 		% need to reshape complex matrices into real ones, and reciprocally
@@ -17,12 +18,16 @@ switch solver
 
 		% penalize potential aditional constraints (Moreau envelope)
 		if strcmp(cflag,'trace') 
-			tau = getoptions(options,'reg',inf);
+			tau = getoptions(options,'trace_reg',0);
 			%
-			F   = @(X,TX) f(TX) + 1/2/tau * (norm(X,'fro')^2-1)^2 ... % trace penalization TODO: 1 or M?
-				+ 1/rho * Tpen(X,TX);
-			G   = @(X,TX) 2*g(TX,X) + 2/tau * (norm(X,'fro')^2-1)*X ...
-				+ 2/rho * Tpen_g(X,TX,X);
+			if tau==0
+				error('the bfgs of minfunc cannot handle constraints');
+			else
+				F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX) + ...
+					1/2/tau * (norm(X,'fro')^2-M)^2; % trace penalization
+				G = @(X,TX) 2*g(TX,X) + 2/rho * Tpen_g(X,TX,X) + ...
+					2/tau * (norm(X,'fro')^2-M)*X;
+			end
 
 		elseif strcmp(cflag,'none')
 			F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX);
@@ -53,31 +58,58 @@ switch solver
 		infos.time  = time;
 
 
+
 	case 'manopt'
 		if strcmp(cflag,'trace')
-			problem.M = spherecomplexfactory(M,r);
+			tau = getoptions(options,'trace_reg',0);
+
+			if tau==0
+				problem.M = spherecomplexfactory(M,r); % trace of matrix = 1
+				%
+				F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX);
+				G = @(X,TX) 2*g(TX,X) + 2/rho * Tpen_g(X,TX,X); % euclidean gradient wrt U
+
+			else
+				warning('manopt can handle the trace constraint without relaxation');
+
+				problem.M = euclideancomplexfactory(M,r);
+				%
+				F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX) + ...
+					1/2/tau * (norm(X,'fro')^2-1)^2;
+				G = @(X,TX) 2*g(TX,X) + 2/rho * Tpen_g(X,TX,X) + ...
+					2/tau * (norm(X,'fro')^2-1)*X;
+
+			end
 
 		elseif strcmp(cflag,'none')
+			warning('it is not necessary to use manopt in the unconstrained case');
+
 			problem.M = euclideancomplexfactory(M,r);
+			%
+			F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX);
+			G = @(X,TX) 2*g(TX,X) + 2/rho * Tpen_g(X,TX,X);
 
 		else
 			error('This constraint cannot be handled: %s', cflag);
 		end
 
-		F = @(X,TX) f(TX) + 1/rho * Tpen(X,TX);
-		G = @(X,TX) 2*g(TX,X) + 2/rho * Tpen_g(X,TX,X);
-		%
 		problem.cost  = @(X) F( X, Tprojn(m,X) );
 		problem.egrad = @(X) G( X, Tprojn(m,X) );
 
 		%checkgradient(problem);
 
 		[U,fU,info] = rlbfgs(problem,U0,options);
+
+		if strcmp(cflag,'trace')
+			U  = sqrt(M) * U; % rescaling so that trace(U*U') = M
+			fU = F(U,Tprojn(m,U)); % fU = M^2 * fU would suffice for the invariant functional
+		end
 		
-		niter = [info.iter];     infos.niter = niter(end);
-		time  = [info.time];     infos.time  = time(end);
-		val   = [info.cost];     infos.val   = val(end);
-		ng    = [info.gradnorm]; infos.ng    = ng(end);
+		infos.niter = info(end).iter;
+		infos.time  = info(end).time;
+		%infos.val  = info(end).cost;
+		infos.val   = fU;
+		infos.ng    = info(end).gradnorm;
 end
 
 end

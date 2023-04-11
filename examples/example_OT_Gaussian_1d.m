@@ -1,5 +1,7 @@
 % example of FFW algorithm for OT between gaussian measures
 
+clear all
+
 
 % ***** set up problem ******
 % ***************************
@@ -75,14 +77,15 @@ Tpen = ffw_Tpen(mm);
 % load problem
 problem = struct;
 %
-problem.name 		= 'optimal-transport';
-problem.vardim 	= mm;
-problem.fobj 		= f;
-problem.f0			= f0;
-problem.grad 		= g;
+problem.name 	= 'optimal-transport';
+problem.vardim = mm;
+problem.fobj   = f;
+problem.f0     = f0;
+problem.grad   = g;
 %problem.grad_pre 	= gU;
+problem.cflag  = 'none';
 problem.hyper 	= la;
-problem.ls 			= ot_lscoeffs(mm,cost,c1,c2,f0,la);
+problem.ls 	   = ot_lscoeffs(mm,cost,c1,c2,f0,la);
 % ***************
 % ***************
 

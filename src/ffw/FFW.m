@@ -49,7 +49,7 @@ if strcmp(verbose,'on')
    fprintf('---------------------------------------------- FFW Algorithm -------------------------------------------------\n');
    fprintf('Fourier Frank-Wolfe solver for low-rank semidefinite programming, see %s\n', '<a href="https://epubs.siam.org/doi/10.1137/19M124071X"> Catala, Duval, Peyré [2019] </a>');
    fprintf('**\n');
-   fprintf('%-10s : %-s\n', 'problem', type);
+   fprintf('%-10s : %-s\n', 'problem', upper(type));
    fprintf('%-10s : %-i\n', 'dimension', d);
    fprintf('%-10s : ', 'order'); fprintf('%-g ', m); fprintf('(size = %i x %i)\n', M, M); 
    fprintf('--------------------------------------------------------------------------------------------------------------\n');
@@ -58,8 +58,12 @@ if strcmp(verbose,'on')
 		'maxiter', maxit, 'maxiter', options_lmo.maxiter, 'maxiter', options_bfgs.MaxIter);
    fprintf('%10s = %-12.1e %10s = %-12.1e %10s = %-12.1e\n', ...	
 		'tol', tol, 'tol', options_lmo.tol, 'tol', options_bfgs.optTol);
-   fprintf('%10s = %-10.4e\n', 'lambda', la);
-   fprintf('%10s = %-10.4e\n', 'rho', rho); 
+   fprintf('%10s = %-10.4e  %25s  %10s = %-12s\n', 'lambda', la, '', 'optim', options_bfgs.toolbox);
+   if strcmp(cflag,'trace')
+		fprintf('%10s = %-10.4e  %25s  %10s = %-11i\n', 'rho', rho, '', 'trace reg', options_bfgs.trace_reg);
+	else
+		fprintf('%10s = %-10.4e\n', 'rho', rho);
+	end
    fprintf('--------------------------------------------------------------------------------------------------------------\n');
    fprintf('%-3s %-18s %-14s %-14s %-14s %-5s %-8s %-12s %-5s %-8s', ...
 		'IT','OBJ','CRITERION','GAP CERTIF','GRAD SNORM','PI','TIME(s)','LS:OLD/NEW','BFGS','TIME(s)');
@@ -185,7 +189,7 @@ opt_bfgs.DerivativeCheck = 'off';
 opt_bfgs.Corr            = 15;
 opt_bfgs.Damped          = 0;
 opt_bfgs.numDiff         = 0; % use-provided gradient
-opt_bfgs.reg             = getoptions(options, 'bfgsReg', Inf); % regularization in case of additional constraint
+opt_bfgs.trace_reg       = getoptions(options, 'bfgsReg', 0); % regularization in case of trace constraint
 
 % options for manopt
 opt_bfgs.maxiter          = getoptions(options, 'bfgsMaxIter', 500);

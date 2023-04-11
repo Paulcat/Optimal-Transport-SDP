@@ -54,6 +54,13 @@ switch shift_mode
     case 'kunis'
         if factorized
             [U,S,V] = mysvdf(mm(i1,:),tol);
+
+				% short test
+				%M1 = size(i1,1);
+				%c = options.mom;
+				%c = c/max(c(:));
+				%[U2,S2] = svds(@(v,tflag)Tprod(c(1:end-1,1:end-1),reshape(v,[n,1]),tflag),[M1,M1],M1);
+				%V = U;
             
             for i=1:d
                 mi   = Shift{i}*mm; mi = mi(i1,:);
@@ -118,6 +125,9 @@ if strcmp(jdiag_step,'random')
     
     Nco = sum(lambda .* cat(3, N{:}), 3);
     [H,h] = eig(Nco); h = diag(h);
+	 
+	 info.eVec = H;
+	 info.eVal = h;
 else
     As = cell2mat(N);
     As = reshape(As,[size(N{1}),d]);

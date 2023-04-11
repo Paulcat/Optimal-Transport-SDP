@@ -1,8 +1,8 @@
 function ifx = ifftd(d,x)
 %IFFTD d-dimensional inverse discrete Fourier transform
-%   IFFTD(X) is the same as IFFTN(X) if X is a d-dimensional array. If not,
-%   IFFTD performs the discrete inverse Fourier transform along the first d
-%   dimensions.
+%   IFFTD(D,X) is the same as IFFTN(X) if X is a d-dimensional array. If
+%   not, IFFTD performs the discrete inverse Fourier transform along the
+%   first d dimensions.
 %
 %   See also fftd
 

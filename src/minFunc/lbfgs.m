@@ -7,8 +7,9 @@ if nargin < 3
 end
 
 % get parameters
-[verbose,verboseI,debug,optTol,progTol,maxFunEvals,maxIter,Damped,...
-    corrections,useMex,HvFunc,LS_init,LS_interp,LS_multi,c1,c2] = processInputOptions(options);
+[verbose,verboseI,debug,optTol,progTol,maxFunEvals,maxIter,Damped,... 
+	corrections,useMex,HvFunc,LS_init,LS_interp,LS_multi,c1,c2] = processInputOptions(options);
+
 
 LBFGS = 5;
 

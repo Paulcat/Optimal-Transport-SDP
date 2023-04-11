@@ -1,5 +1,7 @@
 % example OT between 1D discrete measures
 
+clear all
+
 
 % ***** set up problem ******
 % ***************************
@@ -44,7 +46,7 @@ Cl = (norm(eval1(c1),'inf') + norm(eval2(c2),'inf'))/2;
 Cr = prod(nn) * (norm(c1,'inf') + norm(c2,'inf'))/2;
 %
 la  = 1e-3*Cl; % "unbalanced" penalization 
-rho = 1e-3*Cr; % toeplitz penalization
+rho = 1e-4*Cr; % toeplitz penalization
 
 
 
@@ -82,11 +84,11 @@ problem.ls     = ot_lscoeffs(mm,cost,c1,c2,f0,la); % coefficients for line-searc
 
 
 % ***** load solver options *****
-% ********************************
+% *******************************
 options = struct;
 %
 options.tol 			= 1e-5; % tolerance on ffw criterion
-options.maxiter		= 10; % max iterations for ffw
+options.maxiter		= 40; % max iterations for ffw
 options.bfgsToolbox  = 'manopt';
 options.bfgsProgTol 	= 1e-16; % tolerance on ?
 options.bfgsMaxIter 	= 500;
@@ -142,9 +144,9 @@ c02 = ifftshift(exp(-2i*pi*(-n2:n2)'*x0(:,2)') * a0(:));
 
 % *** OUR SOLVER ***
 % ******************
-profile on
+%profile on
 [U,info] = FFW(problem,options);
-profile viewer
+%profile viewer
 
 % prony extraction
 options_prony.factorized = 1;

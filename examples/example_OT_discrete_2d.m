@@ -1,5 +1,6 @@
 % example OT between 2D discrete measures
 
+clear all
 
 % *** set up problem ***
 % **********************
@@ -82,6 +83,7 @@ problem.vardim = mm;
 problem.fobj 	= f;
 problem.f0 		= f0;
 problem.grad 	= g;
+problem.cflag  = 'none';
 problem.hyper 	= la;
 problem.ls 		= ot_lscoeffs(mm,cost,cA,cB,f0,la);
 % **********************
@@ -94,7 +96,7 @@ problem.ls 		= ot_lscoeffs(mm,cost,cA,cB,f0,la);
 options = struct;
 %
 options.tol 			= 1e-5;
-options.maxiter 		= 25;
+options.maxiter 		= 20;
 options.bfgsToolbox  = 'minfunc';
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
@@ -193,4 +195,10 @@ scatter(x0(:,1),x0(:,2),50,'r','filled');
 scatter(x0(:,3),x0(:,4),50,'b','filled');
 for i=1:size(x,1)
 	plot([x0(i,1),x0(i,3)], [x0(i,2),x0(i,4)], 'k', 'linewidth', 5*a0(i));
+end
+
+scatter(x(:,1),x(:,2),50,'g','filled');
+scatter(x(:,3),x(:,4),50,'m','filled');
+for i=1:size(x,1)
+	plot([x(i,1),x(i,3)], [x(i,2),x(i,4)], 'c', 'linewidth', 5*a0(i));
 end

@@ -1,9 +1,11 @@
 % logistic map example for invariant measure problem
 
+clear all
+
 % ***** set up problem ****
 % *************************
 % generate logistic map (Lagrange discretization)
-r = 4; %2 : single point, 4: fully chaotic, 3.6: intermediate
+r = 2; %2 : single point, 4: fully chaotic, 3.6: intermediate
 f = @(x) r*x.*(1-x);
 Z = rand(1e5,1); % initial states
 % Lagrangian discretization
@@ -95,7 +97,7 @@ options.maxiter 		= 40;
 options.bfgsToolbox  = 'manopt';
 options.bfgsProgTol 	= 1e-16;
 options.bfgsMaxIter 	= 500;
-options.bfgsReg 		= 1e-4; % regularization of constraint in bfgs. Scaling?
+options.bfgsReg 		= 0; % regularization of constraint in bfgs. Scaling?
 options.lmoTol 		= 1e-10;
 options.lmoMaxIter 	= 1e3;
 % ***********************
@@ -120,7 +122,7 @@ minimize( 1/2 * pow_pos(norm(c0,'fro'),2) + 1/2/la*pow_pos(norm(A*c0-c0,'fro'),2
 cvx_end
 
 % Prony extraction
-options_prony.factorized = 0;i
+options_prony.factorized = 0;
 [x0,a0] = mvprony(T0,n,options_prony);
 
 % ************************
