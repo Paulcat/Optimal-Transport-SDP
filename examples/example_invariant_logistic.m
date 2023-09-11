@@ -63,6 +63,8 @@ clf, plot(t,p,'linewidth',3);
 la  = 1e-3; % scaling???
 rho = 1e-3;
 
+params.potential = r;
+A = fwd_op(n,'logistic',params);
 
 % variable size and functionals
 m = n+1;

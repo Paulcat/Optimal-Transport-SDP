@@ -24,8 +24,8 @@ d = numel(m);
 Dnumel = Dnumeln(m);
 
 % Toeplitz penalized term
-normT_sq = @(T) 		sum( Dnumel .* abs(T).^2, 1:d); % Toeplitz norm
-Tpen 		= @(U,TU) 	1/2 * (norm(U'*U,'fro')^2 - normT_sq(TU)); % penalization
-Tpen_g 	= @(U,TU,h) U*(U'*h) - Tprodn(m,TU,h); % gradient
+normT_sq = @(T)      sum( Dnumel .* abs(T).^2, 1:d); % Toeplitz norm
+Tpen     = @(U,TU)   1/2 * (norm(U'*U,'fro')^2 - normT_sq(TU)); % penalization
+Tpen_g 	 = @(U,TU,h) U*(U'*h) - Tprodn(m,TU,h); % gradient
 
 end
