@@ -40,99 +40,99 @@ o1 = genorder(n-1,ordering,positive);
 % compute shifting operators
 Shift = cell(1,d);
 for i=1:d
-    oi = o1;
-    oi(:,i) = oi(:,i)+1; % shift index along i-th dimension
-    
-    [~,ishift] = ismember(oi,o,'rows'); % position of shifted index in matrix (indexed by o)
-    Shift{i} = sparse(i1,ishift,ones(length(i1),1),M,M);
+   oi = o1;
+   oi(:,i) = oi(:,i)+1; % shift index along i-th dimension
+   
+   [~,ishift] = ismember(oi,o,'rows'); % position of shifted index in matrix (indexed by o)
+   Shift{i} = sparse(i1,ishift,ones(length(i1),1),M,M);
 end
 
 % *** compute multiplication matrices ***
 % ***************************************
 N = cell(1,d);
 switch shift_mode
-    case 'kunis'
-        if factorized
-            [U,S,V] = mysvdf(mm(i1,:),tol);
-
-				% short test
-				%M1 = size(i1,1);
-				%c = options.mom;
-				%c = c/max(c(:));
-				%[U2,S2] = svds(@(v,tflag)Tprod(c(1:end-1,1:end-1),reshape(v,[n,1]),tflag),[M1,M1],M1);
-				%V = U;
-            
-            for i=1:d
-                mi   = Shift{i}*mm; mi = mi(i1,:);
-                N{i} = U' * mi * mm(i1,:)' * V * diag(1./S);
-            end
-        else
-            [U,S,V] = mysvd(mm(i1,i1),tol);
-            
-            for i=1:d
-                Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
-                N{i} = U' * Mi * V * diag(1./S);
-            end
-        end
-        
-    case 'klep'
-        if factorized
-            [U,S,V] = mysvdf(mm(i1,:),tol);
-            
-            for i=1:d
-                mi   = Shift{i}*mm; mi = mi(i1,:);
-                N{i} = diag(sqrt(1./S)) * U' * mi * mm(i1,:)' * V * diag(sqrt(1./S)); 
-            end
-        else
-            [U,S,V] = mysvd(mm(i1,:),tol);
-            
-            for i=1:d
-                Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
-                N{i} = diag(sqrt(1./S)) * U' * Mi * V * diag(sqrt(1./S));
-            end
-        end
-        
-    case 'harmouch'
-        if factorized
-            [U,S,V] = mysvdf(mm(i1,:),tol);
-            
-            for i=1:d
-                mi   = Shift{i}*mm; mi = mi(i1,:);
-                N{i} = diag(1./S) * U' * mi * mm(i1,:)' * V;
-            end
-        else
-            [U,S,V] = mysvd(mm(i1,i1),tol);
-            
-            for i=1:d
-                Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
-                N{i} = diag(1./S) * U' * Mi * V;
-            end
-        end    
+   case 'kunis'
+      if factorized
+         [U,S,V] = mysvdf(mm(i1,:),tol);
+         
+         % short test
+         %M1 = size(i1,1);
+         %c = options.mom;
+         %c = c/max(c(:));
+         %[U2,S2] = svds(@(v,tflag)Tprod(c(1:end-1,1:end-1),reshape(v,[n,1]),tflag),[M1,M1],M1);
+         %V = U;
+         
+         for i=1:d
+            mi   = Shift{i}*mm; mi = mi(i1,:);
+            N{i} = U' * mi * mm(i1,:)' * V * diag(1./S);
+         end
+      else
+         [U,S,V] = mysvd(mm(i1,i1),tol);
+         
+         for i=1:d
+            Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
+            N{i} = U' * Mi * V * diag(1./S);
+         end
+      end
+      
+   case 'klep'
+      if factorized
+         [U,S,V] = mysvdf(mm(i1,:),tol);
+         
+         for i=1:d
+            mi   = Shift{i}*mm; mi = mi(i1,:);
+            N{i} = diag(sqrt(1./S)) * U' * mi * mm(i1,:)' * V * diag(sqrt(1./S));
+         end
+      else
+         [U,S,V] = mysvd(mm(i1,:),tol);
+         
+         for i=1:d
+            Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
+            N{i} = diag(sqrt(1./S)) * U' * Mi * V * diag(sqrt(1./S));
+         end
+      end
+      
+   case 'harmouch'
+      if factorized
+         [U,S,V] = mysvdf(mm(i1,:),tol);
+         
+         for i=1:d
+            mi   = Shift{i}*mm; mi = mi(i1,:);
+            N{i} = diag(1./S) * U' * mi * mm(i1,:)' * V;
+         end
+      else
+         [U,S,V] = mysvd(mm(i1,i1),tol);
+         
+         for i=1:d
+            Mi   = Shift{i}*mm; Mi = Mi(i1,i1);
+            N{i} = diag(1./S) * U' * Mi * V;
+         end
+      end
 end
 s = length(S); % number of reconstructed points
 
 % in theory, multiplication matrices should commute if hierarchy collapses
 if d==2
-    e = norm(N{1}*N{2}-N{2}*N{1}, 'fro') / norm(N{1}*N{2}, 'fro');
-    fprintf('Relative commutation error: %.3f\n', e);
+   e = norm(N{1}*N{2}-N{2}*N{1}, 'fro') / norm(N{1}*N{2}, 'fro');
+   fprintf('Relative commutation error: %.3f\n', e);
 end
 
 % *** joint diagonalization ***
 % *****************************
 if strcmp(jdiag_step,'random')
-    lambda = getoptions(options,'lambda',rand(1,d));
-    lambda = reshape(lambda,[1 1 d]);
-    
-    Nco = sum(lambda .* cat(3, N{:}), 3);
-    [H,h] = eig(Nco); h = diag(h);
-	 
-	 info.eVec = H;
-	 info.eVal = h;
+   lambda = getoptions(options,'lambda',rand(1,d));
+   lambda = reshape(lambda,[1 1 d]);
+   
+   Nco = sum(lambda .* cat(3, N{:}), 3);
+   [H,h] = eig(Nco); h = diag(h);
+   
+   info.eVec = H;
+   info.eVal = h;
 else
-    As = cell2mat(N);
-    As = reshape(As,[size(N{1}),d]);
-    [H,~] = jeigen_pcg(As,'init','eye','verbose',verb);
-    H = inv(H);
+   As = cell2mat(N);
+   As = reshape(As,[size(N{1}),d]);
+   [H,~] = jeigen_pcg(As,'init','eye','verbose',verb);
+   H = inv(H);
 end
 
 % *** compute support (from eigenvalues of multiplication matrices) ***
@@ -140,11 +140,11 @@ end
 supp    = zeros(s,d);
 modulus = zeros(s,d);
 for i=1:d
-    ei = diag(inv(H)*N{i}*H);
-    supp(:,i) = mod(-angle(ei)/(2*pi),1);
-    
-    % mean modulus may isolate outliers
-    modulus(:,i) = abs(ei);
+   ei = diag(inv(H)*N{i}*H);
+   supp(:,i) = mod(-angle(ei)/(2*pi),1);
+   
+   % mean modulus may isolate outliers
+   modulus(:,i) = abs(ei);
 end
 modulus = mean(modulus,2);
 
@@ -152,9 +152,9 @@ modulus = mean(modulus,2);
 % ***********************************************
 % matching index range to moment range: [0 n]->[-n n], [-n n]->[-2n 2n]
 if positive
-    ofull = genorder(n,ordering,0);
+   ofull = genorder(n,ordering,0);
 else
-    ofull = genorder(2*n,ordering,1);
+   ofull = genorder(2*n,ordering,1);
 end
 % estimated matrix
 Gr    = reshape(ofull,[size(ofull,1),1,d]); % frequencies sorted following ordering
@@ -163,18 +163,18 @@ Fsupp = exp(-2i*pi* (sum(Gr.*Sr,3)) ); % broadcasting
 
 [~,ids] = marginals(n,ordering,positive); % all moments (no repetition)
 if factorized
-    [i,j] = ind2sub(M,ids);
-    c     = mm(i,:) .* conj(mm(j,:));
-    c     = sum(c,2);
+   [i,j] = ind2sub(M,ids);
+   c     = mm(i,:) .* conj(mm(j,:));
+   c     = sum(c,2);
 else
-    c = mm(ids);
+   c = mm(ids);
 end
 
 % amplitudes: solve least-square system
 amp = real(Fsupp \ c(:));
 
 if positive
-	amp(amp<0) = eps;
+   amp(amp<0) = eps;
 end
 
 fprintf('------------------\n\n');

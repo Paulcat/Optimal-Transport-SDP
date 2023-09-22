@@ -1,4 +1,4 @@
-function [J] = Jaccard_index(x0,xe,r)
+function [J] = Jaccard(x0,xe,r)
 %JACCARD_INDEX Computes Jaccard index between two vectors x0 and xe
 %   We follow the code described in the thesis of Q. Denoyelle, in section
 %   4.3.2
